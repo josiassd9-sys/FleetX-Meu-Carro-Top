@@ -1,0 +1,135 @@
+export interface Part {
+  id: string;
+  name: string;
+  code?: string;
+  category: string;
+  description: string;
+  lifespan?: string;
+  status: 'ok' | 'warning' | 'critical';
+  installDate?: string;
+  maintenanceInterval?: string; // e.g., "100.000 km"
+  technicalSpecs?: { [key: string]: string };
+  estimatedPrice?: number;
+  priceType?: 'unidade' | 'jogo' | 'kit' | 'litro';
+  unitsPerSet?: number;
+  isInBudget?: boolean;
+  brand?: string;
+  photoUrl?: string;
+  fipeValue?: number;
+  lastFipeUpdate?: string;
+}
+
+export interface ServicePart {
+  id: string;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  observation?: string;
+}
+
+export interface ServiceEntry {
+  id: string;
+  date: string;
+  createdAt: string; // Timestamp automático do registro
+  description: string;
+  mileage: number;
+  cost: number; // Total do serviço
+  laborCost: number;
+  partsList: ServicePart[];
+  workshopName: string; // Torna-se obrigatório para um histórico profissional
+  workshopAddress?: string;
+  workshopPhone?: string;
+  photos?: string[];
+  checkInPhotos?: string[]; // Fotos de entrada (odômetro, lataria)
+  mechanicName?: string;
+  notes?: string;
+}
+
+export interface FuelLog {
+  id: string;
+  date: string;
+  createdAt: string;
+  mileage: number;
+  liters: number;
+  cost: number;
+  fullTank: boolean;
+}
+
+export interface Reminder {
+  id: string;
+  createdAt: string;
+  title: string;
+  description?: string;
+  targetMileage?: number;
+  targetDate?: string;
+  isCompleted: boolean;
+  type: 'oil' | 'filter' | 'tire' | 'brake' | 'other';
+}
+
+export interface Vehicle {
+  id: string;
+  createdAt: string; // Data da criação do primeiro registro do veículo
+  name: string; // e.g., "Fiat Strada"
+  model: string; // e.g., "Adventure CD"
+  year: string; // e.g., "2014/15"
+  plate?: string;
+  color?: string;
+  mileage: number;
+  isMileageVerified?: boolean; // Se foi capturado via OCR
+  imageUrl?: string;
+  brandLogoUrl?: string;
+  parts: Part[];
+  services: ServiceEntry[];
+  fuelLogs: FuelLog[];
+  reminders: Reminder[];
+  manualTranscription?: string;
+  maintenanceScore?: number; // Pontuação de 0-100 baseada no histórico
+  fipeValue?: number;
+  lastFipeUpdate?: string;
+  manual?: VehicleManual;
+}
+
+export interface MaintenanceScheduleEntry {
+  mileage: number;
+  items: string[];
+  description: string;
+}
+
+export interface VehicleManual {
+  uploadedAt: string;
+  fileName: string;
+  maintenanceSchedule: MaintenanceScheduleEntry[];
+  technicalSections: {
+    tirePressure?: string;
+    oilSpecification?: string;
+    batteryInfo?: string;
+    filterInfo?: string;
+    fluidsCapacities?: string;
+    [key: string]: string | undefined;
+  };
+  fullText: string;
+  rawSections: {
+    [sectionName: string]: string;
+  };
+}
+
+export interface VehicleSearchLink {
+  id: string;
+  name: string;
+  url: string;
+  color: string;
+}
+
+export interface AppData {
+  vehicles: Vehicle[];
+  settings?: {
+    geminiApiKey?: string;
+    plateApiKey?: string;
+    apiBrasilDeviceToken?: string;
+    plateApiHost?: string;
+    appName?: string;
+    theme?: 'default' | 'blue' | 'green' | 'dark' | 'orange';
+    appIcon?: string;
+    searchLinks?: VehicleSearchLink[];
+  };
+}
