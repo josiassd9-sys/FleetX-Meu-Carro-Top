@@ -7,6 +7,9 @@ export interface Part {
   lifespan?: string;
   status: 'ok' | 'warning' | 'critical';
   installDate?: string;
+  installedAtDate?: string;
+  installedAtMileage?: number;
+  expectedLifeMileage?: number;
   maintenanceInterval?: string; // e.g., "100.000 km"
   technicalSpecs?: { [key: string]: string };
   estimatedPrice?: number;
@@ -43,6 +46,8 @@ export interface ServiceEntry {
   checkInPhotos?: string[]; // Fotos de entrada (odômetro, lataria)
   mechanicName?: string;
   notes?: string;
+  provider?: string;
+  items?: string[];
 }
 
 export interface FuelLog {
@@ -74,6 +79,12 @@ export interface Vehicle {
   year: string; // e.g., "2014/15"
   plate?: string;
   color?: string;
+  engine?: string;
+  version?: string;
+  fuelType?: string;
+  chassis?: string;
+  healthScore?: number;
+  healthAnalysis?: string;
   mileage: number;
   isMileageVerified?: boolean; // Se foi capturado via OCR
   imageUrl?: string;
@@ -82,11 +93,18 @@ export interface Vehicle {
   services: ServiceEntry[];
   fuelLogs: FuelLog[];
   reminders: Reminder[];
+  usageProfile?: 'urban' | 'highway' | 'mixed';
+  avgDailyKm?: number;
+  drivingStyle?: 'smooth' | 'moderate' | 'aggressive';
+  usageDays?: number[]; // [0-6] representando dias da semana
+  operatingRpm?: 'low' | 'mid' | 'high';
   manualTranscription?: string;
   maintenanceScore?: number; // Pontuação de 0-100 baseada no histórico
   fipeValue?: number;
   lastFipeUpdate?: string;
   manual?: VehicleManual;
+  totalSpent?: number; // Custo total acumulado
+  diagnosticHistory?: { date: string, symptom: string, diagnosis: string }[];
 }
 
 export interface MaintenanceScheduleEntry {
@@ -128,8 +146,16 @@ export interface AppData {
     apiBrasilDeviceToken?: string;
     plateApiHost?: string;
     appName?: string;
+    agencyName?: string;
     theme?: 'default' | 'blue' | 'green' | 'dark' | 'orange';
     appIcon?: string;
     searchLinks?: VehicleSearchLink[];
+    language: 'pt-BR' | 'en-US' | 'es-ES';
+    currency: 'BRL' | 'USD' | 'EUR';
+    distanceUnit: 'km' | 'mi';
+    fuelUnit: 'L' | 'gal';
+    region: string;
+    countryId?: string;
+    marketReferenceName?: string;
   };
 }

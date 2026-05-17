@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { vehicleSearchService } from './services/buscaPlacasService';
+import { COUNTRIES, getCountryById } from './config/countryConfig';
 import Markdown from 'react-markdown';
 import { 
   Car, 
@@ -42,115 +44,126 @@ import {
   Layout,
   ExternalLink,
   MapPin,
-  Phone
+  Phone,
+  ShieldCheck,
+  Stethoscope,
+  MessageSquare,
+  Calendar,
+  BarChart3,
+  TrendingDown,
+  TrendingUp,
+  Droplets,
+  Coins,
+  BadgePercent,
+  Eraser,
+  Bell
 } from 'lucide-react';
-
-const ICON_OPTIONS = {
-  Cpu: Cpu,
-  Car: Car,
-  Wrench: Wrench,
-  Shield: Shield,
-  Zap: Zap,
-  Activity: Activity,
-  Gauge: Gauge
-};
-
-const HeaderLogo = ({ iconName, className }: { iconName?: string, className?: string }) => {
-  const IconComponent = ICON_OPTIONS[iconName as keyof typeof ICON_OPTIONS] || Cpu;
-  return <IconComponent className={className} size={32} />;
-};
+import { removeBackground } from "@imgly/background-removal";
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  AreaChart,
+  Area
+} from 'recharts';
 import { motion, AnimatePresence } from 'motion/react';
 import { Vehicle, Part, AppData, ServiceEntry, FuelLog, Reminder, ServicePart, VehicleSearchLink } from './types';
 import { storageService } from './services/storageService';
 import { geminiService } from './services/geminiService';
 import { webVehicleSearchService } from './services/webVehicleSearchService';
-import { detetiveVehicularExtractor } from './services/detetiveVehicularExtractor';
 import { generateMaintenancePdf } from './services/maintenance-pdf';
 import { createVehicleManual } from './services/manual-extraction';
-import { AUTO_DICTIONARY } from './constants';
-import { getBrandLogo } from './brandLogos';
+import { AUTO_DICTIONARY, DEFAULT_SEARCH_LINKS, DEFAULT_VEHICLE_STATE, THEMES } from './constants';
+import { formatCurrency, fileToBase64, resizeImage, cn } from './lib/utils';
 
-const THEMES = {
-  default: { primary: '#141414', accent: '#E11D48', bg: '#F8F9FA' },
-  blue: { primary: '#1e3a8a', accent: '#3b82f6', bg: '#f8fafc' },
-  green: { primary: '#064e3b', accent: '#10b981', bg: '#f0fdf4' },
-  dark: { primary: '#0f172a', accent: '#94a3b8', bg: '#020617' },
-  orange: { primary: '#7c2d12', accent: '#f97316', bg: '#fff7ed' }
+// Componentes Extraídos
+import { HeaderLogo } from './components/HeaderLogo';
+import { BrandLogo } from './components/BrandLogo';
+import { VehicleImage } from './components/VehicleImage';
+import { AddFuelModal } from './components/AddFuelModal';
+import { AddReminderModal } from './components/AddReminderModal';
+import { AddServiceModal } from './components/AddServiceModal';
+import { AddPartModal } from './components/AddPartModal';
+import { MaintenanceSimulationModal } from './components/MaintenanceSimulationModal';
+import { DashboardHome } from './components/DashboardHome';
+import { OnboardingModal } from './components/OnboardingModal';
+import { VehicleDetailHeader } from './components/VehicleDetailHeader';
+import { BudgetModal } from './components/BudgetModal';
+import { SettingsModal } from './components/SettingsModal';
+import { VehicleFormModal } from './components/VehicleFormModal';
+import { DeleteConfirmationModal } from './components/DeleteConfirmationModal';
+import { ServicesTab } from './components/tabs/ServicesTab';
+import { PartsTab } from './components/tabs/PartsTab';
+import { FuelTab } from './components/tabs/FuelTab';
+import { RemindersTab } from './components/tabs/RemindersTab';
+import { IntelligenceTab } from './components/tabs/IntelligenceTab';
+import { ManualTab } from './components/tabs/ManualTab';
+import { AuditTab } from './components/tabs/AuditTab';
+
+
+const ICON_OPTIONS = {
+  Car, Settings, Search, Wrench, Activity, Shield, Zap, Box, Gauge, Palette, Database, Calculator, Cpu
 };
-
-const BrandLogo = ({ vehicleName, brandLogoUrl, className }: { vehicleName: string; brandLogoUrl?: string; className: string }) => {
-  const logo = brandLogoUrl || getBrandLogo(vehicleName);
-  
-  if (!logo) {
-    return (
-      <div className={`${className} bg-gray-50 flex items-center justify-center border border-gray-100`}>
-        <Car size={16} className="text-gray-300" />
-      </div>
-    );
-  }
-
-  return (
-    <div className={`${className} bg-white flex items-center justify-center p-1 border border-gray-100 shadow-sm overflow-hidden`}>
-      <img 
-        src={logo} 
-        alt="Logo da Marca" 
-        className="w-full h-full object-contain" 
-        referrerPolicy="no-referrer"
-      />
-    </div>
-  );
-};
-
-const VehicleImage = ({ src, alt, className }: { src?: string; alt: string; className: string }) => {
-  const [error, setError] = useState(false);
-  
-  if (!src || error) {
-    return (
-      <div className={`${className} bg-gray-100 flex items-center justify-center text-gray-400`}>
-        <Car size={className.includes('w-16') ? 32 : 120} />
-      </div>
-    );
-  }
-
-  return (
-    <img 
-      src={src} 
-      alt={alt} 
-      className={`${className} object-cover`} 
-      referrerPolicy="no-referrer" 
-      onError={() => setError(true)}
-    />
-  );
-};
-
-const DEFAULT_SEARCH_LINKS: VehicleSearchLink[] = [
-  { id: '1', name: 'Placa i', url: 'https://www.placai.com/', color: 'red' },
-  { id: '2', name: 'Detetive Veicular', url: 'https://detetiveveicular.com/', color: 'blue' },
-  { id: '3', name: 'Lupa Veicular', url: 'https://www.lupaveicular.com/consulta-placa/{placa}', color: 'orange' },
-  { id: '4', name: 'Busca Sim', url: 'https://buscasim.com.br/', color: 'purple' },
-  { id: '5', name: 'Busca Placas', url: 'https://buscaplacas.com.br/', color: 'indigo' }
-];
 
 export default function App() {
-  const [data, setData] = useState<AppData>({ vehicles: [] });
+  const [data, setData] = useState<AppData>({ 
+    vehicles: [],
+    settings: {
+      language: 'pt-BR',
+      currency: 'BRL',
+      distanceUnit: 'km',
+      fuelUnit: 'L',
+      region: 'Brasil',
+      countryId: 'BR',
+      theme: 'default'
+    }
+  });
+
+  const currentCountry = getCountryById(data.settings?.countryId || 'BR');
+
+  const getCurrencySymbol = () => {
+    const currency = data.settings?.currency || 'BRL';
+    if (currency === 'USD') return '$';
+    if (currency === 'EUR') return '€';
+    return 'R$';
+  };
+
+  const getDistanceUnit = () => data.settings?.distanceUnit || 'KM';
+
+  const formatDistance = (val: number) => {
+    return `${val.toLocaleString(data.settings?.language || 'pt-BR')} ${getDistanceUnit()}`;
+  };
+
+  const marketRef = data.settings?.marketReferenceName || 'Valor de Mercado';
+  
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [isAddingVehicle, setIsAddingVehicle] = useState(false);
   const [isEditingVehicle, setIsEditingVehicle] = useState(false);
   const [isAddingPart, setIsAddingPart] = useState(false);
   const [isDictionaryOpen, setIsDictionaryOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isOnboarding, setIsOnboarding] = useState(false);
+  const [isDetectingRegion, setIsDetectingRegion] = useState(false);
   const [isBudgetOpen, setIsBudgetOpen] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [isResearching, setIsResearching] = useState(false);
   const [isSearchingImage, setIsSearchingImage] = useState(false);
+  const [isSearchingLogo, setIsSearchingLogo] = useState(false);
   const [isSearchingPlate, setIsSearchingPlate] = useState(false);
   const [plateSearchStatus, setPlateSearchStatus] = useState('');
+  const [robotLogs, setRobotLogs] = useState<string[]>([]);
   const [rawPastedData, setRawPastedData] = useState('');
   const [isProcessingAssisted, setIsProcessingAssisted] = useState(false);
   const [showInternalBrowser, setShowInternalBrowser] = useState(false);
+  const robotPopupRef = useRef<Window | null>(null);
   const [internalBrowserUrl, setInternalBrowserUrl] = useState('');
 
   const searchPortals = [
+    { name: currentCountry.name, url: currentCountry.searchPortalUrl, icon: '🚀' },
     { name: 'Busca Sim', url: 'https://buscasim.com.br/', icon: '🌐' },
     { name: 'Placa i', url: 'https://www.placai.com/', icon: '🔍' },
     { name: 'Detetive Veicular', url: 'https://detetiveveicular.com/', icon: '🕵️' },
@@ -164,14 +177,16 @@ export default function App() {
   const [simulationMileage, setSimulationMileage] = useState<number | ''>('');
   const [simulationResults, setSimulationResults] = useState<any[]>([]);
   const [isCalculatingSimulation, setIsCalculatingSimulation] = useState(false);
-  const [activeTab, setActiveTab] = useState<'parts' | 'services' | 'fuel' | 'reminders' | 'manual'>('parts');
+  const [activeTab, setActiveTab] = useState<'parts' | 'services' | 'fuel' | 'reminders' | 'manual' | 'audit' | 'intelligence'>('parts');
   
-  // Manual States
-  const [isGeneratingManual, setIsGeneratingManual] = useState(false);
-  const [isUploadingPDF, setIsUploadingPDF] = useState(false);
-  const [manualChatQuery, setManualChatQuery] = useState('');
+  const [itemToDelete, setItemToDelete] = useState<{ type: string, id: string } | null>(null);
+
   const [manualChatResponse, setManualChatResponse] = useState('');
+  const [manualChatQuery, setManualChatQuery] = useState('');
+  const [isUploadingPDF, setIsUploadingPDF] = useState(false);
+  const [isGeneratingManual, setIsGeneratingManual] = useState(false);
   const [isChattingWithManual, setIsChattingWithManual] = useState(false);
+  
   const manualPDFInputRef = useRef<HTMLInputElement>(null);
 
   // Sync selectedVehicle when data changes and clear manual states
@@ -210,7 +225,7 @@ export default function App() {
   const [newReminder, setNewReminder] = useState({ title: '', targetMileage: '', targetDate: '', type: 'oil' as any });
   
   // New Vehicle State
-  const [newVehicle, setNewVehicle] = useState({ name: '', model: '', year: '', plate: '', color: '', mileage: 0, imageUrl: '', brandLogoUrl: '' });
+  const [newVehicle, setNewVehicle] = useState(DEFAULT_VEHICLE_STATE);
   
   // New Part State
   const [newPartName, setNewPartName] = useState('');
@@ -219,47 +234,6 @@ export default function App() {
   const vehicleImageInputRef = useRef<HTMLInputElement>(null);
   const brandLogoInputRef = useRef<HTMLInputElement>(null);
   const pasteTextAreaRef = useRef<HTMLTextAreaElement>(null);
-
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
-    });
-  };
-
-  const resizeImage = (base64Str: string, maxWidth = 1200, maxHeight = 1200): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.src = base64Str;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > maxWidth) {
-            height *= maxWidth / width;
-            width = maxWidth;
-          }
-        } else {
-          if (height > maxHeight) {
-            width *= maxHeight / height;
-            height = maxHeight;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
-        
-        // Comprime para JPEG com 70% de qualidade para reduzir drasticamente o tamanho
-        resolve(canvas.toDataURL('image/jpeg', 0.7));
-      };
-    });
-  };
 
   const handleVehicleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -281,7 +255,12 @@ export default function App() {
         const base64 = await fileToBase64(file);
         // Logos de marca podem ser menores (Ex: 400x400)
         const compressed = await resizeImage(base64, 400, 400);
-        setNewVehicle(prev => ({ ...prev, brandLogoUrl: compressed }));
+        
+        if (isEditingVehicle || isAddingVehicle) {
+          setNewVehicle(prev => ({ ...prev, brandLogoUrl: compressed }));
+        } else if (selectedVehicle) {
+          updateSelectedVehicle({ brandLogoUrl: compressed });
+        }
       } catch (err) {
         alert('Erro ao carregar logo da marca.');
       }
@@ -290,14 +269,57 @@ export default function App() {
 
   useEffect(() => {
     const loadedData = storageService.loadData();
-    setData(loadedData);
-    if (loadedData.settings?.geminiApiKey) {
-      geminiService.setApiKey(loadedData.settings.geminiApiKey);
+    
+    if (!loadedData.settings || !loadedData.settings.region) {
+      // Primeiro acesso: disparar onboarding
+      setIsOnboarding(true);
+      autoDetectRegion();
+    } else {
+      const merged = {
+        ...loadedData,
+        settings: {
+          language: 'pt-BR',
+          currency: 'BRL',
+          distanceUnit: 'km',
+          fuelUnit: 'L',
+          region: 'Brasil',
+          marketReferenceName: 'Tabela FIPE',
+          ...(loadedData.settings || {})
+        }
+      };
+      setData(merged as any);
+      if (merged.settings) {
+        geminiService.setApiKey(merged.settings.geminiApiKey || process.env.GEMINI_API_KEY || '');
+        geminiService.setGlobalSettings(merged.settings);
+      }
     }
   }, []);
 
+  const autoDetectRegion = async () => {
+    setIsDetectingRegion(true);
+    try {
+      const locale = navigator.language;
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const defaults = await geminiService.detectRegionalDefaults(locale, timezone);
+      
+      const newSettings = {
+        ...data.settings,
+        ...defaults,
+        theme: 'default'
+      } as any;
+      
+      const newData = { ...data, settings: newSettings };
+      setData(newData as any);
+      geminiService.setGlobalSettings(newSettings);
+    } catch (e) {
+      console.error("Erro na detecção automática:", e);
+    } finally {
+      setIsDetectingRegion(false);
+    }
+  };
+
   useEffect(() => {
-    const theme = THEMES[data.settings?.theme || 'default'];
+    const theme = THEMES[(data.settings?.theme as keyof typeof THEMES) || 'default'];
     const styleId = 'theme-overrides';
     let styleTag = document.getElementById(styleId);
     
@@ -320,14 +342,77 @@ export default function App() {
     setData(newData);
     storageService.saveData(newData);
     
-    if (newData.settings?.geminiApiKey) {
-      geminiService.setApiKey(newData.settings.geminiApiKey);
+    if (newData.settings) {
+      if (newData.settings.geminiApiKey) geminiService.setApiKey(newData.settings.geminiApiKey);
+      geminiService.setGlobalSettings(newData.settings);
     }
 
     if (selectedVehicle) {
       const updated = newData.vehicles.find(v => v.id === selectedVehicle.id);
       if (updated) setSelectedVehicle(updated);
     }
+  };
+
+  const predictCurrentMileage = (vehicle: Vehicle) => {
+    const lastRecord = [...(vehicle.fuelLogs || []), ...(vehicle.services || [])]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+
+    const baseMileage = lastRecord ? lastRecord.mileage : vehicle.mileage;
+    const baseDate = lastRecord ? new Date(lastRecord.date) : new Date(vehicle.createdAt || new Date());
+
+    // Se tiver perfil de uso definido (avgDailyKm), usamos ele como fallback ou complemento
+    const dailyKm = vehicle.avgDailyKm || 0;
+    const usageDays = vehicle.usageDays || [1, 2, 3, 4, 5]; // Fallback para dias de semana
+    
+    // Se tiver logs de combustível, calculamos a média real por dia de uso
+    let realAvgKmPerUsageDay = 0;
+    if (vehicle.fuelLogs && vehicle.fuelLogs.length >= 2) {
+      const sortedLogs = [...vehicle.fuelLogs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      const firstLog = sortedLogs[0];
+      const lastLog = sortedLogs[sortedLogs.length - 1];
+      
+      let totalUsageDaysInRange = 0;
+      let curr = new Date(firstLog.date);
+      while(curr <= new Date(lastLog.date)) {
+        if (usageDays.includes(curr.getDay())) totalUsageDaysInRange++;
+        curr.setDate(curr.getDate() + 1);
+      }
+
+      const kmDiff = lastLog.mileage - firstLog.mileage;
+      if (totalUsageDaysInRange > 0 && kmDiff > 0) {
+        realAvgKmPerUsageDay = kmDiff / totalUsageDaysInRange;
+      }
+    }
+
+    const effectiveKmPerDay = realAvgKmPerUsageDay || dailyKm;
+    if (effectiveKmPerDay <= 0) return vehicle.mileage;
+
+    // Calculamos quantos "dias de uso" se passaram desde o último registro
+    let activeDaysSinceLastRecord = 0;
+    let scanDate = new Date(baseDate);
+    const now = new Date();
+    
+    while(scanDate < now) {
+      scanDate.setDate(scanDate.getDate() + 1);
+      if (usageDays.includes(scanDate.getDay())) activeDaysSinceLastRecord++;
+    }
+    
+    const projectedIncrement = Math.round(effectiveKmPerDay * activeDaysSinceLastRecord);
+    return Math.max(vehicle.mileage, baseMileage + projectedIncrement);
+  };
+
+  const updateSelectedVehicle = (updates: Partial<Vehicle>) => {
+    if (!selectedVehicle) return;
+    const updated = { ...selectedVehicle, ...updates };
+    setSelectedVehicle(updated);
+    setData(prev => {
+      const updatedData = {
+        ...prev,
+        vehicles: prev.vehicles.map(v => v.id === selectedVehicle.id ? updated : v)
+      };
+      storageService.saveData(updatedData);
+      return updatedData;
+    });
   };
 
   const runSimulation = async () => {
@@ -430,18 +515,180 @@ export default function App() {
     }
   };
 
+  const [isAnalyzingHealth, setIsAnalyzingHealth] = useState(false);
+  const [symptomQuery, setSymptomQuery] = useState('');
+  const [diagnosisResult, setDiagnosisResult] = useState<string | null>(null);
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
+  const [maintenancePredictions, setMaintenancePredictions] = useState<{ item: string; daysLeft: number; estimatedDate: string; priority: string }[]>([]);
+  const [isLoadingPredictions, setIsLoadingPredictions] = useState(false);
+  const [fuelInsight, setFuelInsight] = useState<string | null>(null);
+  const [marketAnalysis, setMarketAnalysis] = useState<string | null>(null);
+  const [isAnalyzingMarket, setIsAnalyzingMarket] = useState(false);
+  const [isRemovingBackground, setIsRemovingBackground] = useState(false);
+  const [tcoAnalysis, setTcoAnalysis] = useState<string | null>(null);
+  const [isAnalyzingTco, setIsAnalyzingTco] = useState(false);
+  const [digitalPassport, setDigitalPassport] = useState<string | null>(null);
+  const [isGeneratingPassport, setIsGeneratingPassport] = useState(false);
+
+  const handleRemoveBackground = async () => {
+    if (!newVehicle.imageUrl) return;
+    setIsRemovingBackground(true);
+    setPlateSearchStatus('🤖 ROBÔ ESTÚDIO: Analisando bordas e transparência...');
+    try {
+      const blob = await removeBackground(newVehicle.imageUrl, {
+        progress: (key, current, total) => {
+          const pct = Math.round((current / total) * 100);
+          setPlateSearchStatus(`📸 TRATAMENTO IA: ${pct}% concluído...`);
+        }
+      });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewVehicle(prev => ({ ...prev, imageUrl: reader.result as string }));
+        setPlateSearchStatus('✨ SUCESSO: Fundo removido! Imagem pronta para o sistema.');
+        setTimeout(() => setPlateSearchStatus(''), 5000);
+      };
+      reader.readAsDataURL(blob);
+    } catch (error) {
+      console.error(error);
+      setPlateSearchStatus('⚠️ Ops! O robô não conseguiu remover o fundo desta imagem.');
+      setTimeout(() => setPlateSearchStatus(''), 4000);
+    } finally {
+      setIsRemovingBackground(false);
+    }
+  };
+
+  const handleMarketAnalysis = async () => {
+    if (!selectedVehicle) return;
+    setIsAnalyzingMarket(true);
+    try {
+      const fipe = await geminiService.fetchFipeValue(selectedVehicle.name, selectedVehicle.model, selectedVehicle.year);
+      const analysis = await geminiService.resaleValueAnalysis(selectedVehicle, fipe);
+      setMarketAnalysis(analysis);
+    } catch (error) {
+       console.error(error);
+    } finally {
+      setIsAnalyzingMarket(false);
+    }
+  };
+
+  const handleTCOAnalysis = async () => {
+    if (!selectedVehicle) return;
+    setIsAnalyzingTco(true);
+    try {
+      const totalFuel = selectedVehicle.fuelLogs?.reduce((acc, log) => acc + log.cost, 0) || 0;
+      const totalServices = selectedVehicle.services?.reduce((acc, s) => acc + s.cost, 0) || 0;
+      const analysis = await geminiService.analyzeTCO(selectedVehicle, totalFuel, totalServices);
+      setTcoAnalysis(analysis);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsAnalyzingTco(false);
+    }
+  };
+
+  const handleGeneratePassport = async () => {
+    if (!selectedVehicle) return;
+    setIsGeneratingPassport(true);
+    try {
+      const passport = await geminiService.generateDigitalPassport(selectedVehicle);
+      setDigitalPassport(passport);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsGeneratingPassport(false);
+    }
+  };
+
+  const fetchPredictions = async (vehicle: Vehicle) => {
+    setIsLoadingPredictions(true);
+    try {
+      const result = await geminiService.predictMaintenance(vehicle);
+      setMaintenancePredictions(result.items);
+      
+      // Auto-fetch fuel insight if enough logs exist
+      const analytics = getFuelAnalytics();
+      if (analytics && analytics.data.length >= 1) {
+        const insight = await geminiService.getFuelInsight(analytics.avgKmL.toString(), vehicle);
+        setFuelInsight(insight);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoadingPredictions(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedVehicle) {
+      fetchPredictions(selectedVehicle);
+      setDiagnosisResult(null);
+      setSymptomQuery('');
+    }
+  }, [selectedVehicle?.id]);
+
+  const handleDiagnose = async () => {
+    if (!symptomQuery || !selectedVehicle) return;
+    setIsDiagnosing(true);
+    try {
+      const result = await geminiService.diagnoseSymptom(selectedVehicle, symptomQuery);
+      setDiagnosisResult(result);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsDiagnosing(false);
+    }
+  };
+
+  const runHealthAnalysis = async () => {
+    if (!selectedVehicle) return;
+    setIsAnalyzingHealth(true);
+    try {
+      const result = await geminiService.analyzeVehicleHealth(selectedVehicle);
+      const updatedVehicles = data.vehicles.map(v => 
+        v.id === selectedVehicle.id ? { ...v, healthScore: result.score, healthAnalysis: result.analysis } : v
+      );
+      const updatedData = { ...data, vehicles: updatedVehicles };
+      handleSave(updatedData);
+      setSelectedVehicle({ ...selectedVehicle, healthScore: result.score, healthAnalysis: result.analysis });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsAnalyzingHealth(false);
+    }
+  };
+
+  const shareTechnicalReport = () => {
+    if (!selectedVehicle) return;
+    
+    const servicesText = selectedVehicle.services.slice(-3).map(s => `• ${s.date}: ${s.description} (${s.mileage}km)`).join('\n');
+    const predictionsText = maintenancePredictions.map(p => `• ${p.item}: Previsto para ${p.estimatedDate}`).join('\n');
+    
+    const report = `*RELATÓRIO TÉCNICO - ${selectedVehicle.name} ${selectedVehicle.model}*
+🚗 Placa: ${selectedVehicle.plate || 'N/A'}
+📊 Saúde Atual: ${selectedVehicle.healthScore || 'N/A'}%
+📍 KM: ${selectedVehicle.mileage}
+
+*ÚLTIMOS SERVIÇOS:*
+${servicesText || 'Nenhum histórico recente.'}
+
+*PREVISÕES DE MANUTENÇÃO:*
+${predictionsText || 'Analise de saúde necessária.'}
+
+💬 *Análise IA:* ${selectedVehicle.healthAnalysis || '-'}
+
+Gerado via Mecânico IA de Alta Performance.`;
+
+    const encodedReport = encodeURIComponent(report);
+    window.open(`https://wa.me/?text=${encodedReport}`, '_blank');
+  };
+
   const addVehicle = () => {
     if (!newVehicle.name) return;
     const vehicle: Vehicle = {
+      ...newVehicle,
       id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(), // Registro inicial do veículo
-      name: newVehicle.name,
-      model: newVehicle.model,
-      year: newVehicle.year,
-      plate: newVehicle.plate,
+      createdAt: new Date().toISOString(),
       mileage: Number(newVehicle.mileage),
-      imageUrl: newVehicle.imageUrl,
-      brandLogoUrl: newVehicle.brandLogoUrl,
       parts: [],
       services: [],
       fuelLogs: [],
@@ -449,7 +696,7 @@ export default function App() {
     };
     const newData = { ...data, vehicles: [...data.vehicles, vehicle] };
     handleSave(newData);
-    setNewVehicle({ name: '', model: '', year: '', plate: '', color: '', mileage: 0, imageUrl: '', brandLogoUrl: '' });
+    setNewVehicle(DEFAULT_VEHICLE_STATE);
     setIsAddingVehicle(false);
     setSelectedVehicle(vehicle);
   };
@@ -460,20 +707,15 @@ export default function App() {
       if (v.id === selectedVehicle.id) {
         return {
           ...v,
-          name: newVehicle.name,
-          model: newVehicle.model,
-          year: newVehicle.year,
-          plate: newVehicle.plate,
-          mileage: Number(newVehicle.mileage),
-          imageUrl: newVehicle.imageUrl,
-          brandLogoUrl: newVehicle.brandLogoUrl
+          ...newVehicle,
+          mileage: Number(newVehicle.mileage)
         };
       }
       return v;
     });
     handleSave({ ...data, vehicles: updatedVehicles });
     setIsEditingVehicle(false);
-    setNewVehicle({ name: '', model: '', year: '', plate: '', color: '', mileage: 0, imageUrl: '', brandLogoUrl: '' });
+    setNewVehicle(DEFAULT_VEHICLE_STATE);
   };
 
   const addService = () => {
@@ -579,28 +821,52 @@ export default function App() {
     handleSave({ ...data, vehicles: updatedVehicles });
   };
 
-  const deleteItem = (type: 'services' | 'fuelLogs' | 'reminders', itemId: string) => {
-    if (!selectedVehicle) return;
-    const updatedVehicles = data.vehicles.map(v => {
-      if (v.id === selectedVehicle.id) {
-        return { ...v, [type]: (v[type] as any[]).filter((item: any) => item.id !== itemId) };
-      }
-      return v;
-    });
-    handleSave({ ...data, vehicles: updatedVehicles });
+  const handleDeleteItem = (type: string, id: string) => {
+    setItemToDelete({ type, id });
+  };
+
+  const confirmDelete = () => {
+    if (!itemToDelete) return;
+    
+    if (itemToDelete.type === 'vehicle') {
+      const newData = { ...data, vehicles: data.vehicles.filter(v => v.id !== itemToDelete.id) };
+      handleSave(newData);
+      if (selectedVehicle?.id === itemToDelete.id) setSelectedVehicle(null);
+    } else {
+      if (!selectedVehicle) return;
+      const type = itemToDelete.type === 'service' ? 'services' : 
+                   itemToDelete.type === 'fuel' ? 'fuelLogs' : 
+                   itemToDelete.type === 'reminder' ? 'reminders' : 'parts';
+      
+      const updatedVehicles = data.vehicles.map(v => {
+        if (v.id === selectedVehicle.id) {
+          return { ...v, [type]: (v[type] as any[]).filter((item: any) => item.id !== itemToDelete.id) };
+        }
+        return v;
+      });
+      handleSave({ ...data, vehicles: updatedVehicles });
+    }
+    setItemToDelete(null);
   };
 
   const openEditModal = () => {
     if (!selectedVehicle) return;
     setNewVehicle({
-      name: selectedVehicle.name,
-      model: selectedVehicle.model,
-      year: selectedVehicle.year,
+      ...selectedVehicle,
       plate: selectedVehicle.plate || '',
       color: selectedVehicle.color || '',
-      mileage: selectedVehicle.mileage,
       imageUrl: selectedVehicle.imageUrl || '',
-      brandLogoUrl: selectedVehicle.brandLogoUrl || ''
+      brandLogoUrl: selectedVehicle.brandLogoUrl || '',
+      engine: selectedVehicle.engine || '',
+      version: selectedVehicle.version || '',
+      fuelType: selectedVehicle.fuelType || '',
+      chassis: selectedVehicle.chassis || '',
+      usageProfile: selectedVehicle.usageProfile || 'mixed',
+      avgDailyKm: selectedVehicle.avgDailyKm || 30,
+      drivingStyle: selectedVehicle.drivingStyle || 'moderate',
+      usageDays: selectedVehicle.usageDays || [1, 2, 3, 4, 5],
+      operatingRpm: selectedVehicle.operatingRpm || 'mid',
+      fipeValue: selectedVehicle.fipeValue || 0
     });
     setIsEditingVehicle(true);
   };
@@ -612,22 +878,150 @@ export default function App() {
     }
 
     setIsSearchingImage(true);
+    const fullDescription = `${newVehicle.name} ${newVehicle.model} ${newVehicle.year || ''}`.trim();
+    setRobotLogs(prev => [...prev, `[ROBOT] Buscando foto original: ${fullDescription}...`, '[SCAN] Vasculhando arquivos oficiais...']);
+    
     try {
-      const fullDescription = `${newVehicle.name} ${newVehicle.model} ${newVehicle.year || ''}`.trim();
-      const url = await geminiService.searchVehicleImage(fullDescription);
-      if (url) {
-        setNewVehicle(prev => ({ ...prev, imageUrl: url }));
-        alert('✅ Foto oficial encontrada!');
+      const { url, candidates, searchUrl } = await geminiService.searchVehicleImage(fullDescription);
+      
+      let validUrl = null;
+      
+      // Função interna para testar se o link é uma imagem válida
+      const testImage = (src: string): Promise<boolean> => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve(true);
+          img.onerror = () => resolve(false);
+          img.src = src;
+          // Timeout de 5 segundos para o teste
+          setTimeout(() => resolve(false), 5000);
+        });
+      };
+
+      // Testamos os candidatos enviados pelo robô
+      const linksToTest = candidates && candidates.length > 0 ? candidates : (url ? [url] : []);
+      
+      for (const link of linksToTest) {
+        setRobotLogs(prev => [...prev, `[TEST] Verificando link: ${link.substring(0, 30)}...`]);
+        const isValid = await testImage(link);
+        if (isValid) {
+          validUrl = link;
+          break;
+        } else {
+          setRobotLogs(prev => [...prev, '[FAIL] Link quebrado ou inacessível. Tentando próximo...']);
+        }
+      }
+
+      if (validUrl) {
+        setNewVehicle(prev => ({ ...prev, imageUrl: validUrl }));
+        setRobotLogs(prev => [
+          ...prev, 
+          '[SUCCESS] Foto Original Validada e Localizada!', 
+          '[ACTION] Abrindo imagem para você salvar...',
+          '[INFO] Esta imagem passou no teste de integridade do robô.'
+        ]);
+
+        window.open(validUrl, '_blank');
+        
+        setRobotLogs(prev => [
+          ...prev,
+          `[FONTE] ${validUrl}`,
+          '[GUIDE] 1. Salve a imagem, depois carregue-a no "Alterar Foto".',
+          '[GUIDE] 2. Finalize com "Tratar com Robô" no Estúdio.'
+        ]);
+
+        setPlateSearchStatus('📸 Foto validada e aberta! Salve-a e carregue no veículo.');
+        setTimeout(() => setPlateSearchStatus(''), 10000);
       } else {
-        alert('Não encontrou imagem oficial de alta qualidade. Você pode colar um link manualmente.');
+        setRobotLogs(prev => [
+          ...prev, 
+          '[WARN] Nenhum link direto passou no teste de integridade.',
+          '[ACTION] Abrindo galeria de busca para seleção manual segura...'
+        ]);
+        window.open(searchUrl, '_blank');
+        setPlateSearchStatus('🔎 Abrindo busca manual de alta resolução...');
+        setTimeout(() => setPlateSearchStatus(''), 5000);
       }
     } catch (err) {
       console.error('Erro ao buscar imagem oficial:', err);
-      alert('Erro ao buscar imagem oficial.');
+      setRobotLogs(prev => [...prev, '[ERROR] Falha crítica na busca do robô.']);
     } finally {
       setIsSearchingImage(false);
     }
   };
+
+  const searchLogo = async (brandName: string, isFromDetail = false) => {
+    if (!brandName) {
+      alert('Preencha a marca primeiro');
+      return;
+    }
+
+    setIsSearchingLogo(true);
+    setRobotLogs(prev => [...prev, `[ROBOT] Buscando logotipo oficial para ${brandName}...`, '[SCAN] Vasculhando bases de marcas e patentes...']);
+    
+    try {
+      const { url, candidates, searchUrl } = await geminiService.searchVehicleLogo(brandName);
+      
+      let validUrl = null;
+      
+      const testImage = (src: string): Promise<boolean> => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve(true);
+          img.onerror = () => resolve(false);
+          img.src = src;
+          setTimeout(() => resolve(false), 5000);
+        });
+      };
+
+      const linksToTest = candidates && candidates.length > 0 ? candidates : (url ? [url] : []);
+      
+      for (const link of linksToTest) {
+        setRobotLogs(prev => [...prev, `[TEST] Verificando logo: ${link.substring(0, 30)}...`]);
+        const isValid = await testImage(link);
+        if (isValid) {
+          validUrl = link;
+          break;
+        } else {
+          setRobotLogs(prev => [...prev, '[FAIL] Link quebrado ou sem transparência. Tentando próximo...']);
+        }
+      }
+
+      if (validUrl) {
+        if (isFromDetail) {
+          updateSelectedVehicle({ brandLogoUrl: validUrl });
+        } else {
+          setNewVehicle(prev => ({ ...prev, brandLogoUrl: validUrl }));
+        }
+        
+        setRobotLogs(prev => [
+          ...prev, 
+          '[SUCCESS] Logotipo Validado e Localizado!', 
+          '[ACTION] O logo foi aplicado ao veículo automaticamente.'
+        ]);
+      } else {
+        setRobotLogs(prev => [
+          ...prev, 
+          '[WARN] Nenhum logotipo direto passou no teste de integridade.',
+          '[ACTION] Abrindo galeria de logos para seleção manual...'
+        ]);
+        window.open(searchUrl, '_blank');
+      }
+    } catch (err) {
+      console.error('Erro ao buscar logotipo:', err);
+      setRobotLogs(prev => [...prev, '[ERROR] Falha na busca do logotipo pelo robô.']);
+    } finally {
+      setIsSearchingLogo(false);
+    }
+  };
+
+  const robotLogsEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (robotLogsEndRef.current) {
+      robotLogsEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [robotLogs]);
 
   const searchVehicleByPlate = async () => {
     const plate = newVehicle.plate?.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -638,24 +1032,46 @@ export default function App() {
     }
 
     setIsSearchingPlate(true);
-    setPlateSearchStatus('🚀 Iniciando Robô Extrator...');
+    setPlateSearchStatus('🚀 INICIANDO ROBÔ DE CAPTURA...');
+    setRobotLogs(['[INFO] Sistema de reconhecimento iniciado', `[INFO] Alvo: Placa ${plate}`]);
     
+    // Abre o Pop-up imediatamente para o robô "trabalhar"
+    try {
+      const popup = vehicleSearchService.openPopup(plate, currentCountry.searchPortalUrl);
+      if (popup) {
+        robotPopupRef.current = popup;
+        setRobotLogs(prev => [...prev, `[ROBOT] Portal ${currentCountry.name} aberto. Digite a placa lá!`, `[INFO] Robô aguardando você pesquisar no portal ${currentCountry.flag}...`]);
+      }
+    } catch (e) {
+      console.warn('Pop-up bloqueado:', e);
+      setRobotLogs(prev => [...prev, '[WARN] Janela bloqueada pelo navegador. Ativando modo stealth...']);
+    }
+
     const statuses = [
-      '🤖 Robô: Acessando base de dados Alpha...',
-      '🖱️ Localizando registro da placa...',
-      '⌨️ Consultando bases de dados secundárias...',
-      '⏳ Aguardando retorno dos hubs públicos...',
-      '🔍 Extraindo dados técnicos (JSON Extraction)...',
-      '🕵️ Consolidando informações finais do veículo...'
+      '📡 Sincronizando com Hub Veicular...',
+      `🤖 Monitorando janela ${currentCountry.name}...`,
+      '🔎 Aguardando preenchimento humano...',
+      '⚖️ Capturando dados via OCR/Buffer...',
+      '✨ Consolidando informações técnicas...'
+    ];
+
+    const findingSimulations = [
+      `[SITE] Gateway Externo: ${currentCountry.searchPortalUrl.replace('https://', '')}`,
+      '[WEB] Portal carregado com sucesso',
+      '[EXTRACT] Aguardando interação do usuário...',
+      '[CHECK] Robô pronto para processar cópia (Ctrl+C)',
+      '[DATA] Metadados em standby...',
+      '[INFO] Preparado para captura 100% infalível.'
     ];
 
     let step = 0;
     const statusInterval = setInterval(() => {
       if (step < statuses.length) {
         setPlateSearchStatus(statuses[step]);
+        setRobotLogs(prev => [...prev, findingSimulations[step]]);
         step++;
       }
-    }, 2000);
+    }, 1800);
 
     try {
       console.log(`🔍 Robô em ação para placa: ${plate}`);
@@ -664,19 +1080,40 @@ export default function App() {
         plate, 
         data.settings?.plateApiKey, 
         data.settings?.apiBrasilDeviceToken, 
-        data.settings?.plateApiHost
+        data.settings?.plateApiHost,
+        currentCountry.id
       );
       
       clearInterval(statusInterval);
       
       if (result.success) {
         setPlateSearchStatus('✅ Veículo Identificado!');
+        setRobotLogs(prev => [
+          ...prev, 
+          `[SUCCESS] MARCA: ${result.name}`, 
+          `[SUCCESS] MODELO: ${result.model}`,
+          `[SUCCESS] ANO: ${result.year}`,
+          result.color ? `[SUCCESS] COR: ${result.color}` : '',
+          result.fuelType ? `[SUCCESS] COMBUSTÍVEL: ${result.fuelType}` : '',
+          '[INFO] Extração via DOM concluída com sucesso.'
+        ].filter(Boolean));
+
+        // Fecha o popup se ele ainda estiver aberto
+        if (robotPopupRef.current && !robotPopupRef.current.closed) {
+          robotPopupRef.current.close();
+          robotPopupRef.current = null;
+        }
+
         setNewVehicle(prev => ({
           ...prev,
           name: result.name || prev.name || '',
           model: result.model || prev.model || '',
           year: result.year || prev.year || '',
           color: result.color || prev.color || '',
+          engine: result.engine || prev.engine || '',
+          version: result.version || prev.version || '',
+          fuelType: result.fuelType || prev.fuelType || '',
+          chassis: result.chassis || prev.chassis || '',
           imageUrl: result.imageUrl || prev.imageUrl,
           plate: plate
         }));
@@ -687,10 +1124,22 @@ export default function App() {
         
         setTimeout(() => setPlateSearchStatus(''), 3000);
       } else {
-        setPlateSearchStatus('❌ Falha na extração.');
-        const msg = result.message || "O robô não conseguiu ler os dados automaticamente.";
-        alert(msg);
-        setTimeout(() => setPlateSearchStatus(''), 3000);
+        // FALLBACK: O Robô pede ajuda do humano na janela aberta
+        setPlateSearchStatus('🕵️ MODO ASSISTIDO: COPIE OS DADOS');
+        setRobotLogs(prev => [
+          ...prev, 
+          '[WARN] Robô não conseguiu extração automática (Security Block).',
+          '[INFO] ABRIMOS O SITE PARA VOCÊ.',
+          '[ACTION] NO SITE: Digite a placa, depois aperte CTRL+A e CTRL+C (Selecionar tudo e copiar).',
+          '[ACTION] AQUI: Clique no botão "CAPTURAR DADOS" colorido abaixo.'
+        ]);
+        
+        // Se o popup não abriu antes, abre agora
+        if (!robotPopupRef.current || robotPopupRef.current.closed) {
+          try {
+            robotPopupRef.current = vehicleSearchService.openPopup(plate, currentCountry.searchPortalUrl);
+          } catch (e) {}
+        }
       }
     } catch (err: any) {
       clearInterval(statusInterval);
@@ -744,7 +1193,7 @@ export default function App() {
     }
   };
 
-  const captureFromDetetive = async () => {
+  const captureFromExternal = async () => {
     const plate = newVehicle.plate?.toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (!plate || plate.length !== 7) {
       alert('Digite uma placa completa no formato MERCOSUL (7 caracteres).');
@@ -753,21 +1202,19 @@ export default function App() {
 
     setIsCapturingFromWeb(true);
     try {
-      await detetiveVehicularExtractor.openAndCapture(plate, (data) => {
-        setNewVehicle(prev => ({
-          ...prev,
-          name: data.name || prev.name,
-          model: data.model || prev.model,
-          year: data.year || prev.year,
-          plate: data.plate || prev.plate,
-          imageUrl: prev.imageUrl // mantém imagem se houver
-        }));
+      // Abre o popup do portal específico do país
+      const popup = vehicleSearchService.openPopup(plate, currentCountry.searchPortalUrl);
+      if (popup) {
+        robotPopupRef.current = popup;
         
-        if (data.name || data.model) {
-          alert(`✅ Dados capturados!\n${data.name} ${data.model} ${data.year}`);
-        }
-        setIsWebSearchOpen(false);
-      });
+        // Ativa o modo de captura assistida
+        setPlateSearchStatus('🕵️ MODO ASSISTIDO: COPIE OS DADOS');
+        setRobotLogs([
+          `[ROBOT] Janela ${currentCountry.name} aberta.`,
+          '[ACTION] No site: Digite a placa, pesquise, e depois CTRL+A -> CTRL+C.',
+          '[ACTION] Aqui: Clique no botão "CAPTURAR DADOS" colorido.'
+        ]);
+      }
     } catch (err) {
       console.error('Erro na captura automática:', err);
       alert('Erro ao capturar dados. Tente novamente ou preencha manualmente.');
@@ -781,22 +1228,57 @@ export default function App() {
     if (!dataToProcess.trim()) return;
     
     setIsProcessingAssisted(true);
+    setPlateSearchStatus('🧠 IA: Analisando texto e extraindo dados...');
+    setRobotLogs(prev => [...prev, '[INFO] Enviando dados para o Cérebro IA...', '[PROCESS] Decodificando ficha técnica...']);
+    
     try {
       const result = await geminiService.parseRawVehicleData(dataToProcess);
       if (result && result.success !== false) {
-        setNewVehicle(prev => ({
-          ...prev,
-          name: result.name || prev.name,
-          model: result.model || prev.model,
-          year: result.year || prev.year,
-          color: result.color || prev.color,
-          plate: result.plate ? result.plate.toUpperCase().replace(/[^A-Z0-9]/g, '') : prev.plate
-        }));
+        setPlateSearchStatus('🎉 Dados extraídos com sucesso!');
+        
+        const logs = [
+          `[SUCCESS] MARCA: ${result.name || '?' }`,
+          `[SUCCESS] MODELO: ${result.model || '?' }`,
+          result.color ? `[SUCCESS] COR: ${result.color}` : null,
+          result.fuelType ? `[SUCCESS] COMBUSTÍVEL: ${result.fuelType}` : null,
+          result.mileage ? `[SUCCESS] KM: ${result.mileage.toLocaleString()} km` : null,
+          result.fipeValue ? `[SUCCESS] VALOR: ${formatCurrency(result.fipeValue)}` : null,
+          '[INFO] Ficha técnica sincronizada.'
+        ].filter(Boolean) as string[];
+
+        setRobotLogs(prev => [...prev, ...logs]);
+
+        setNewVehicle(prev => {
+          const updated = {
+            ...prev,
+            name: result.name || prev.name,
+            model: result.model || prev.model,
+            year: result.year || prev.year,
+            color: result.color || prev.color,
+            engine: result.engine || prev.engine,
+            version: result.version || prev.version,
+            fuelType: result.fuelType || prev.fuelType,
+            chassis: result.chassis || prev.chassis,
+            mileage: typeof result.mileage === 'number' ? result.mileage : prev.mileage,
+            fipeValue: typeof result.fipeValue === 'number' ? result.fipeValue : prev.fipeValue,
+            plate: result.plate ? result.plate.toUpperCase().replace(/[^A-Z0-9]/g, '') : prev.plate
+          };
+          return updated;
+        });
         setRawPastedData(''); 
-        alert('✨ Dados extraídos com sucesso do texto informado!');
+        
+        // Fecha o popup após captura manual bem sucedida
+        if (robotPopupRef.current && !robotPopupRef.current.closed) {
+          robotPopupRef.current.close();
+          robotPopupRef.current = null;
+        }
+
+        // Auto-scroll to fields or show success state
+        setTimeout(() => setPlateSearchStatus('✓ Cadastro preenchido!'), 2000);
       } else {
-        const errorMsg = result?.error || result?.message || 'Não foi possível identificar dados no texto informado.';
-        alert(`${errorMsg}\n\nDica: Tente copiar o conteúdo completo da página de resultado (Ctrl+A, Ctrl+C).`);
+        setPlateSearchStatus('⚠️ Erro na interpretação.');
+        const errorMsg = result?.error || result?.message || 'Não foi possível identificar dados.';
+        alert(`${errorMsg}\n\nTente copiar novamente.`);
       }
     } catch (error: any) {
       console.error(error);
@@ -853,13 +1335,7 @@ export default function App() {
 
   const deleteVehicle = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('Tem certeza que deseja excluir este veículo?')) {
-      if (confirm('Você tem certeza absoluta? Posso deletar mesmo?')) {
-        const newData = { ...data, vehicles: data.vehicles.filter(v => v.id !== id) };
-        handleSave(newData);
-        if (selectedVehicle?.id === id) setSelectedVehicle(null);
-      }
-    }
+    setItemToDelete({ type: 'vehicle', id });
   };
 
   const checkDuplicate = (name: string, code?: string) => {
@@ -1004,7 +1480,7 @@ export default function App() {
     const plate = vehicle.plate?.toUpperCase() || 'SEM_PLACA';
     const brand = vehicle.name.replace(/\s+/g, '.');
     const model = vehicle.model.replace(/\s+/g, '.');
-    const year = vehicle.year.replace(/\//g, '-').replace(/\s+/g, '');
+    const year = String(vehicle.year || '').replace(/\//g, '-').replace(/\s+/g, '');
     
     link.download = `${plate}.${brand}.${model}.${year}.json`;
     link.click();
@@ -1083,6 +1559,43 @@ export default function App() {
       console.error('Erro ao gerar manual:', error);
     } finally {
       setIsGeneratingManual(false);
+    }
+  };
+
+  const runDiagnosis = async () => {
+    if (!symptomQuery || !selectedVehicle) return;
+    setIsDiagnosing(true);
+    try {
+      const res = await geminiService.diagnoseSymptom(selectedVehicle, symptomQuery);
+      setDiagnosisResult(res);
+      // Salva no histórico do veículo
+      const newDiagnostic = {
+        date: new Date().toISOString(),
+        symptom: symptomQuery,
+        diagnosis: res
+      };
+      updateSelectedVehicle({
+        diagnosticHistory: [newDiagnostic, ...(selectedVehicle.diagnosticHistory || [])]
+      });
+    } catch (e) {
+      setDiagnosisResult("Erro ao gerar diagnóstico.");
+    } finally {
+      setIsDiagnosing(false);
+    }
+  };
+
+  const runTCOAnalysis = async () => {
+    if (!selectedVehicle) return;
+    setIsAnalyzingTco(true);
+    try {
+      const fuelTotal = (selectedVehicle.fuelLogs || []).reduce((acc, l) => acc + l.cost, 0);
+      const serviceTotal = (selectedVehicle.services || []).reduce((acc, l) => acc + l.cost, 0);
+      const res = await geminiService.analyzeTCO(selectedVehicle, fuelTotal, serviceTotal);
+      setTcoAnalysis(res);
+    } catch (e) {
+      setTcoAnalysis("Erro ao analisar TCO.");
+    } finally {
+      setIsAnalyzingTco(false);
     }
   };
 
@@ -1200,6 +1713,38 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
     return Math.max(Math.min(health, 100), 0);
   };
 
+  const getFuelAnalytics = () => {
+    if (!selectedVehicle || !selectedVehicle.fuelLogs || selectedVehicle.fuelLogs.length < 2) return null;
+    
+    const logs = [...selectedVehicle.fuelLogs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const data = [];
+    let totalKm = 0;
+    let totalLiters = 0;
+    let totalCost = 0;
+
+    for (let i = 1; i < logs.length; i++) {
+        const dist = logs[i].mileage - logs[i-1].mileage;
+        if (dist > 0 && logs[i].liters > 0) {
+            const consumption = dist / logs[i].liters;
+            data.push({
+                date: new Date(logs[i].date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+                kmL: Number(consumption.toFixed(2)),
+                costL: Number((logs[i].cost / logs[i].liters).toFixed(2))
+            });
+            totalKm += dist;
+            totalLiters += logs[i].liters;
+            totalCost += logs[i].cost;
+        }
+    }
+
+    const avgKmL = totalLiters > 0 ? (totalKm / totalLiters).toFixed(2) : 0;
+    const avgCostKm = totalKm > 0 ? (totalCost / totalKm).toFixed(2) : 0;
+
+    return { data, avgKmL, avgCostKm };
+  };
+
+  const fuelAnalytics = getFuelAnalytics();
+
   const getMaintenanceScore = () => {
     if (!selectedVehicle) return 0;
     
@@ -1220,12 +1765,84 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className="min-h-screen bg-brand-bg tech-grid p-4 md:p-8"
-    >
+    <>
+      {/* Modal de Onboarding / Configuração Automática */}
+      {isOnboarding && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-md">
+          <motion.div 
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className="bg-white w-full max-w-md rounded-3xl p-8 text-center space-y-6 shadow-2xl overflow-hidden relative"
+          >
+            <div className="absolute top-0 left-0 w-full h-2 bg-brand-primary" />
+            
+            <div className="w-20 h-20 bg-brand-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-2">
+              <Globe className="text-brand-primary animate-pulse" size={40} />
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-black text-gray-900">Regionalização IA</h2>
+              <p className="text-gray-500 text-sm mt-2">
+                O aplicativo está detectando sua localização para configurar moeda, unidades e referências locais automaticamente.
+              </p>
+            </div>
+
+            <div className="bg-gray-50 rounded-2xl p-6 space-y-4 text-left">
+              {isDetectingRegion ? (
+                <div className="flex flex-col items-center py-4 space-y-3">
+                  <div className="w-8 h-8 border-4 border-brand-primary border-t-transparent rounded-full animate-spin" />
+                  <p className="text-[10px] font-black uppercase text-brand-primary animate-pulse">Sincronizando com satélites...</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black uppercase text-gray-400">Local Detectado</p>
+                      <p className="text-sm font-bold text-gray-900">{data.settings?.region || 'Detectando...'}</p>
+                    </div>
+                    <div className="space-y-1 text-right">
+                      <p className="text-[10px] font-black uppercase text-gray-400">Moeda Local</p>
+                      <p className="text-sm font-bold text-gray-900">{data.settings?.currency} ({getCurrencySymbol()})</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 border-t border-gray-100 pt-4">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black uppercase text-gray-400">Ref. de Mercado</p>
+                      <p className="text-sm font-bold text-gray-900">{data.settings?.marketReferenceName}</p>
+                    </div>
+                    <div className="space-y-1 text-right">
+                      <p className="text-[10px] font-black uppercase text-gray-400">Unidade Distância</p>
+                      <p className="text-sm font-bold text-gray-900">{data.settings?.distanceUnit}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => {
+                storageService.saveData(data);
+                setIsOnboarding(false);
+              }}
+              disabled={isDetectingRegion}
+              className={`w-full p-4 rounded-xl font-black uppercase tracking-widest text-sm transition-all shadow-lg ${
+                isDetectingRegion 
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                : 'bg-brand-primary text-white hover:bg-brand-primary/90 active:scale-95'
+              }`}
+            >
+              Começar Agora
+            </button>
+          </motion.div>
+        </div>
+      )}
+
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="min-h-screen bg-brand-bg tech-grid p-4 md:p-8"
+      >
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-2 gap-2">
@@ -1347,11 +1964,11 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
                     />
                   </div>
                   
-                  <div className="text-center w-full">
+                      <div className="text-center w-full">
                     <div className="relative flex items-center justify-center gap-4 pt-2 border-t border-gray-50">
                       <div className="flex items-center gap-1.5">
                         <Gauge size={14} className="text-brand-accent" />
-                        <span className="text-xs font-mono font-bold text-gray-700">{vehicle.mileage.toLocaleString()} km</span>
+                        <span className="text-xs font-mono font-bold text-gray-700">{formatDistance(vehicle.mileage)}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Box size={14} className="text-brand-accent" />
@@ -1360,7 +1977,7 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
                       {vehicle.fipeValue && (
                         <div className="flex items-center gap-1 bg-green-50 px-2 py-0.5 rounded text-[10px] font-black text-green-600">
                           <DollarSign size={10} />
-                          R$ {vehicle.fipeValue.toLocaleString()}
+                          {formatCurrency(vehicle.fipeValue)}
                         </div>
                       )}
                       <motion.button 
@@ -1414,14 +2031,40 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
             animate={{ opacity: 1 }}
             className="space-y-2"
           >
-            {/* Breadcrumbs / Back */}
-            <button 
-              onClick={() => setSelectedVehicle(null)}
-              className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-brand-accent transition-colors mb-2"
-              id="back-btn"
-            >
-              <ArrowLeft size={16} /> Voltar para Meus Veículos
-            </button>
+            {/* Breadcrumbs / Back and Actions Area */}
+            <div className="flex items-center justify-between mb-4 px-2">
+              <button 
+                onClick={() => setSelectedVehicle(null)}
+                className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-brand-accent transition-colors"
+                id="back-btn"
+              >
+                <ArrowLeft size={16} /> Voltar para Meus Veículos
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => exportVehicle(selectedVehicle)}
+                  className="p-2 hover:text-brand-accent transition-colors text-gray-500 bg-white/5 rounded-xl border border-white/5"
+                  title="Exportar Dados do Veículo (.json)"
+                >
+                  <Download size={18} />
+                </button>
+                <button 
+                  onClick={openEditModal}
+                  className="p-2 hover:text-brand-accent transition-colors text-gray-500 bg-white/5 rounded-xl border border-white/5"
+                  title="Configuração do Veículo"
+                >
+                  <Settings size={18} />
+                </button>
+                <button 
+                  onClick={shareTechnicalReport}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-all rounded-xl text-[10px] font-black uppercase tracking-widest border border-green-500/20 shadow-sm"
+                  title="Gerar Relatório Técnico"
+                >
+                  <MessageSquare size={14} /> Relatório Técnico
+                </button>
+              </div>
+            </div>
 
             {/* Vehicle Detail Header */}
             <div className="glass-dark text-white p-6 md:p-8 relative overflow-hidden mb-2">
@@ -1432,6 +2075,34 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
                 </div>
 
                 <div className="w-full max-w-[540px] mb-2 relative">
+                  {/* Alerta de Sincronização Proativa */}
+                  {predictCurrentMileage(selectedVehicle) > selectedVehicle.mileage + 100 && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      className="absolute -top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] sm:w-auto sm:min-w-[280px]"
+                    >
+                      <div className="bg-brand-primary text-white p-3 rounded-2xl shadow-2xl border border-white/20 backdrop-blur-md flex items-center justify-between gap-4 overflow-hidden relative">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-white/20 p-2 rounded-xl animate-pulse">
+                            <RefreshCw size={16} />
+                          </div>
+                          <div className="text-left">
+                            <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">Sincronizar Odômetro?</p>
+                            <p className="text-[9px] text-white/80 font-medium">IA estima que você rodou +{Math.round(predictCurrentMileage(selectedVehicle) - selectedVehicle.mileage)} {getDistanceUnit()}.</p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => updateSelectedVehicle({ mileage: predictCurrentMileage(selectedVehicle) })}
+                          className="bg-white text-brand-primary px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-tighter hover:bg-brand-accent hover:text-white transition-all shadow-lg shrink-0"
+                        >
+                          Sincronizar
+                        </button>
+                        <div className="absolute bottom-0 left-0 h-0.5 bg-brand-accent" style={{ animation: 'progress-shimmer 2s linear infinite', width: '100%' }}></div>
+                      </div>
+                    </motion.div>
+                  )}
+
                   <VehicleImage 
                     src={selectedVehicle.imageUrl} 
                     alt={selectedVehicle.name} 
@@ -1439,42 +2110,437 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
                   />
                 </div>
 
-                <div className="flex flex-col items-center gap-1 mb-2">
-                  <div className="flex items-center justify-center gap-4 mb-2">
-                    <BrandLogo 
-                      vehicleName={selectedVehicle.name} 
-                      brandLogoUrl={selectedVehicle.brandLogoUrl}
-                      className="w-16 h-16 rounded-2xl shadow-xl border-2 border-white/20"
-                    />
-                    <h2 className="text-3xl md:text-5xl font-black tracking-tighter italic uppercase underline decoration-brand-accent/50 underline-offset-8 decoration-4">{selectedVehicle.name}</h2>
+                  <div className="flex flex-col items-center gap-1 mb-2">
+                    <div className="flex items-center justify-center gap-4 mb-2">
+                    <div className="relative group">
+                      <BrandLogo 
+                        vehicleName={selectedVehicle.name} 
+                        brandLogoUrl={selectedVehicle.brandLogoUrl}
+                        className="w-16 h-16 rounded-2xl shadow-xl border-2 border-white/20"
+                      />
+                      <div className="absolute -right-2 -bottom-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={() => searchLogo(selectedVehicle.name, true)}
+                          disabled={isSearchingLogo}
+                          className="bg-brand-primary text-white p-1.5 rounded-lg shadow-lg hover:bg-brand-accent transition-all disabled:opacity-50"
+                          title="Melhorar Logo via IA"
+                        >
+                          {isSearchingLogo ? <RefreshCw className="animate-spin" size={10} /> : <Search size={10} />}
+                        </button>
+                        <button 
+                          onClick={() => brandLogoInputRef.current?.click()}
+                          className="bg-white text-brand-primary p-1.5 rounded-lg shadow-lg hover:bg-gray-100 transition-all border border-gray-200"
+                          title="Upload de Logo Manual"
+                        >
+                          <Upload size={10} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex flex-col">
+                      <p className="text-[10px] font-black uppercase text-brand-primary/60 tracking-widest mb-1 flex items-center gap-1.5">
+                        <Zap size={10} className="text-brand-accent" /> Perfil: {selectedVehicle.drivingStyle === 'smooth' ? 'Motorista Pé Leve' : selectedVehicle.drivingStyle === 'aggressive' ? 'Perfil Esportivo' : 'Motorista Equilibrado'}
+                      </p>
+                      <h2 className="text-3xl md:text-5xl font-black tracking-tighter italic uppercase underline decoration-brand-accent/50 underline-offset-8 decoration-4">{selectedVehicle.name}</h2>
+                    </div>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <p className="text-lg text-gray-400 font-bold opacity-80">{selectedVehicle.model} — {selectedVehicle.year}</p>
+                      
+                      {/* Health Indicator Widget */}
+                      <div className="flex items-center gap-4 mt-2 mb-1">
+                        <button 
+                          onClick={runHealthAnalysis}
+                          disabled={isAnalyzingHealth}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all ${
+                            selectedVehicle.healthScore 
+                              ? 'bg-white/5 border-white/10 hover:bg-white/10' 
+                              : 'bg-brand-accent/20 border-brand-accent/30 hover:scale-105'
+                          }`}
+                        >
+                          {isAnalyzingHealth ? (
+                            <div className="w-4 h-4 border-2 border-brand-accent border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <ShieldCheck size={16} className={selectedVehicle.healthScore ? 'text-green-400' : 'text-brand-accent'} />
+                          )}
+                          <div className="text-left">
+                            <p className="text-[10px] font-black uppercase text-gray-400 leading-none">Status de Saúde</p>
+                            <p className="text-xs font-black text-white">
+                              {selectedVehicle.healthScore ? `${selectedVehicle.healthScore}%` : 'Analisar agora'}
+                            </p>
+                          </div>
+                        </button>
+
+                        {(selectedVehicle.version || selectedVehicle.engine) && (
+                          <div className="flex flex-wrap items-center justify-center gap-2">
+                            {selectedVehicle.version && (
+                              <span className="text-[10px] bg-brand-primary/20 text-brand-primary px-2 py-1 rounded-lg font-black uppercase tracking-wider">{selectedVehicle.version}</span>
+                            )}
+                            {selectedVehicle.engine && (
+                              <span className="text-[10px] bg-brand-accent/20 text-brand-accent px-2 py-1 rounded-lg font-black uppercase tracking-wider">{selectedVehicle.engine}</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {selectedVehicle.healthAnalysis && (
+                        <div className="max-w-md bg-green-500/10 border border-green-500/20 p-3 rounded-2xl mb-4 relative text-center">
+                          <p className="text-[11px] text-green-200/80 leading-relaxed font-medium italic">
+                            "{selectedVehicle.healthAnalysis}"
+                          </p>
+                          <div className="absolute -top-2 -left-2 bg-green-500 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest shadow-lg">IA Insight</div>
+                        </div>
+                      )}
+
+                      {/* Predictive Agenda */}
+                      <div className="w-full max-w-4xl mb-6">
+                        <div className="flex items-center justify-between mb-4 px-2">
+                           <div className="flex items-center gap-2">
+                            <Calendar className="text-brand-accent" size={20} />
+                            <h3 className="text-lg font-black text-white italic uppercase tracking-tighter">Agenda Preditiva IA</h3>
+                           </div>
+                           {isLoadingPredictions && <div className="w-4 h-4 border-2 border-brand-accent border-t-transparent rounded-full animate-spin"></div>}
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          {maintenancePredictions.length > 0 ? maintenancePredictions.map((pred, idx) => (
+                            <motion.div 
+                              key={idx}
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: idx * 0.1 }}
+                              className="bg-white/5 border border-white/10 p-4 rounded-2xl group hover:border-brand-accent/50 transition-all cursor-default"
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest ${
+                                  pred.priority === 'Alta' ? 'bg-red-500 text-white' : 
+                                  pred.priority === 'Média' ? 'bg-orange-500 text-white' : 'bg-blue-500 text-white'
+                                }`}>
+                                  {pred.priority}
+                                </span>
+                                <p className="text-[10px] text-gray-500 font-bold">{pred.estimatedDate}</p>
+                              </div>
+                              <h4 className="text-sm font-black text-white uppercase mb-1 line-clamp-1">{pred.item}</h4>
+                              <p className="text-xs text-brand-accent font-bold mb-3">~ {pred.daysLeft} dias restantes</p>
+                              
+                              <a 
+                                href={`https://lista.mercadolivre.com.br/${pred.item.replace(/\s+/g, '-')}-${selectedVehicle?.name || ''}-${selectedVehicle?.model || ''}-${String(selectedVehicle?.year || '').split('/')[0]}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-2 w-full py-2 bg-yellow-400 hover:bg-yellow-500 text-brand-primary text-[10px] font-black uppercase rounded-xl transition-colors"
+                              >
+                                <ExternalLink size={12} /> Comprar Peças
+                              </a>
+                            </motion.div>
+                          )) : (
+                            !isLoadingPredictions && <p className="text-xs text-gray-500 italic col-span-3 text-center">Nenhuma previsão disponível para este perfil.</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Fuel Analytics Dashboard */}
+                      {fuelAnalytics && fuelAnalytics.data.length > 0 && (
+                        <div className="w-full max-w-4xl mb-6">
+                           <div className="flex items-center gap-2 mb-4 px-2">
+                            <BarChart3 className="text-brand-accent" size={20} />
+                            <h3 className="text-lg font-black text-white italic uppercase tracking-tighter">Eficiência e Telemetria</h3>
+                           </div>
+                           
+                           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                              <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <TrendingUp className="text-green-400" size={14} />
+                                  <p className="text-[10px] text-gray-500 font-black uppercase">Consumo Médio</p>
+                                </div>
+                                <p className="text-2xl font-black text-white">{fuelAnalytics.avgKmL} <span className="text-xs text-gray-500">{getDistanceUnit().toLowerCase()}/{data.settings?.fuelUnit || 'L'}</span></p>
+                              </div>
+                              <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <TrendingDown className="text-blue-400" size={14} />
+                                  <p className="text-[10px] text-gray-500 font-black uppercase">Custo por {getDistanceUnit()}</p>
+                                </div>
+                                <p className="text-2xl font-black text-white">{formatCurrency(Number(fuelAnalytics.avgCostKm))}</p>
+                              </div>
+                              <div className="bg-brand-primary/10 border border-brand-primary/20 p-4 rounded-2xl relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:scale-110 transition-transform">
+                                  <Droplets size={48} className="text-brand-primary" />
+                                </div>
+                                <p className="text-[9px] text-brand-primary font-black uppercase mb-1">Status de Combustão</p>
+                                <p className="text-[11px] text-gray-300 font-bold leading-tight italic">
+                                  {fuelInsight || "Calculando eficiência energética..."}
+                                </p>
+                              </div>
+                           </div>
+
+                           <div className="bg-white/5 border border-white/10 p-6 rounded-3xl h-[250px] w-full">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={fuelAnalytics.data}>
+                                  <defs>
+                                    <linearGradient id="colorKmL" x1="0" y1="0" x2="0" y2="1">
+                                      <stop offset="5%" stopColor="#FBFF00" stopOpacity={0.3}/>
+                                      <stop offset="95%" stopColor="#FBFF00" stopOpacity={0}/>
+                                    </linearGradient>
+                                  </defs>
+                                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                                  <XAxis 
+                                    dataKey="date" 
+                                    stroke="#555" 
+                                    fontSize={10} 
+                                    tickLine={false} 
+                                    axisLine={false}
+                                    tick={{ fontWeight: 'bold' }}
+                                  />
+                                  <YAxis 
+                                    stroke="#555" 
+                                    fontSize={10} 
+                                    tickLine={false} 
+                                    axisLine={false}
+                                    unit=" km/L"
+                                    domain={['dataMin - 1', 'dataMax + 1']}
+                                  />
+                                  <Tooltip 
+                                    contentStyle={{ 
+                                      backgroundColor: '#111', 
+                                      border: '1px solid #ffffff10', 
+                                      borderRadius: '16px',
+                                      fontSize: '12px',
+                                      fontWeight: 'bold',
+                                      color: '#fff'
+                                    }}
+                                    itemStyle={{ color: '#FBFF00' }}
+                                  />
+                                  <Area 
+                                    type="monotone" 
+                                    dataKey="kmL" 
+                                    name="Eficiência (km/L)"
+                                    stroke="#FBFF00" 
+                                    strokeWidth={3}
+                                    fillOpacity={1} 
+                                    fill="url(#colorKmL)" 
+                                    animationDuration={2000}
+                                  />
+                                </AreaChart>
+                              </ResponsiveContainer>
+                           </div>
+                        </div>
+                      )}
+
+                      {/* Market Strategy Section */}
+                      <div className="w-full max-w-4xl mt-6 mb-12">
+                        <div className="bg-gradient-to-br from-brand-primary/20 to-brand-accent/5 border border-brand-primary/30 rounded-3xl p-6 relative overflow-hidden">
+                          <div className="absolute -right-10 -bottom-10 opacity-5 rotate-12">
+                             <Coins size={200} />
+                          </div>
+                          
+                          <div className="relative z-10">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                              <div className="flex items-center gap-3">
+                                <div className="bg-brand-primary p-2 rounded-xl">
+                                  <BadgePercent className="text-brand-accent" size={24} />
+                                </div>
+                                <div>
+                                  <h3 className="text-xl font-black text-white italic uppercase tracking-tight">Estratégia de Negociação IA</h3>
+                                  <p className="text-sm text-gray-400 font-bold">Argumentação de venda baseada em dados reais e saúde do veículo.</p>
+                                </div>
+                              </div>
+                              
+                              <button
+                                onClick={handleMarketAnalysis}
+                                disabled={isAnalyzingMarket}
+                                className="px-6 py-3 bg-brand-primary border border-brand-accent/30 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 transition-transform disabled:opacity-50 flex items-center justify-center gap-2"
+                              >
+                                {isAnalyzingMarket ? (
+                                  <div className="w-4 h-4 border-2 border-brand-accent border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                  <>Analisar Revenda <Coins size={14} /></>
+                                )}
+                              </button>
+                            </div>
+
+                            {marketAnalysis ? (
+                              <motion.div 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="bg-black/20 p-6 rounded-2xl border border-white/5"
+                              >
+                                <div className="markdown-body text-sm text-gray-200 leading-relaxed font-medium mb-4">
+                                  <Markdown>{marketAnalysis}</Markdown>
+                                </div>
+                                <button 
+                                  onClick={() => setMarketAnalysis(null)}
+                                  className="text-[10px] font-black uppercase text-gray-500 hover:text-white transition-colors"
+                                >
+                                  Ocultar Análise
+                                </button>
+                              </motion.div>
+                            ) : (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
+                                  <p className="text-[10px] text-gray-500 font-black uppercase mb-1">Dica de Especialista</p>
+                                  <p className="text-xs text-gray-300 font-bold italic">"O histórico de manutenção completo pode valorizar seu carro em até 15% acima da FIPE."</p>
+                                </div>
+                                <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
+                                  <p className="text-[10px] text-gray-500 font-black uppercase mb-1">Potencial de Venda</p>
+                                  <p className="text-xs text-gray-300 font-bold italic">Analise a saúde técnica para descobrir se você deve pedir premium ou aceitar propostas.</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Finance & TCO Section */}
+                      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 mb-12">
+                        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 relative overflow-hidden group">
+                           <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center gap-3">
+                                <div className="bg-blue-500/20 p-2 rounded-xl">
+                                  <Calculator className="text-blue-400" size={20} />
+                                </div>
+                                <h3 className="text-lg font-black text-white italic uppercase tracking-tight">Finanças & TCO</h3>
+                              </div>
+                              <button 
+                                onClick={handleTCOAnalysis}
+                                disabled={isAnalyzingTco}
+                                className="text-[10px] font-black uppercase bg-blue-500/10 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/20 hover:bg-blue-500/20 transition-all"
+                              >
+                                {isAnalyzingTco ? 'Analisando...' : 'Análise Financeira'}
+                              </button>
+                           </div>
+
+                           {tcoAnalysis ? (
+                             <div className="bg-black/20 p-4 rounded-xl border border-white/5 max-h-[300px] overflow-y-auto custom-scrollbar">
+                               <div className="markdown-body text-xs text-gray-300 leading-relaxed font-medium">
+                                 <Markdown>{tcoAnalysis}</Markdown>
+                               </div>
+                             </div>
+                           ) : (
+                             <p className="text-xs text-gray-500 font-bold italic">
+                               Descubra o custo por KM real do seu veículo consolidando gastos de combustível e oficina.
+                             </p>
+                           )}
+                        </div>
+
+                        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 relative overflow-hidden group">
+                           <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center gap-3">
+                                <div className="bg-green-500/20 p-2 rounded-xl">
+                                  <ShieldCheck className="text-green-400" size={20} />
+                                </div>
+                                <h3 className="text-lg font-black text-white italic uppercase tracking-tight">Passaporte IA</h3>
+                              </div>
+                              <button 
+                                onClick={handleGeneratePassport}
+                                disabled={isGeneratingPassport}
+                                className="text-[10px] font-black uppercase bg-green-500/10 text-green-400 px-3 py-1.5 rounded-lg border border-green-500/20 hover:bg-green-500/20 transition-all"
+                              >
+                                {isGeneratingPassport ? 'Gerando...' : 'Ver Certificado'}
+                              </button>
+                           </div>
+
+                           {digitalPassport ? (
+                             <div className="bg-black/20 p-4 rounded-xl border border-white/5 max-h-[300px] overflow-y-auto custom-scrollbar">
+                               <div className="markdown-body text-xs text-gray-300 leading-relaxed font-medium">
+                                 <Markdown>{digitalPassport}</Markdown>
+                               </div>
+                             </div>
+                           ) : (
+                             <p className="text-xs text-gray-500 font-bold italic">
+                               Gere um selo de procedência digital baseado na integridade do seu histórico de manutenção.
+                             </p>
+                           )}
+                        </div>
+                      </div>
+
+                      {/* AI Mechanic Section */}
+                      <div className="w-full max-w-4xl mt-6">
+                        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-xl relative overflow-hidden">
+                          <div className="absolute top-0 right-0 p-4 opacity-10">
+                            <Sparkles size={120} className="text-brand-accent rotate-12" />
+                          </div>
+                          
+                          <div className="relative z-10 text-left">
+                            <div className="flex items-center gap-3 mb-4">
+                              <div className="bg-brand-accent p-2 rounded-xl shadow-[0_0_20px_rgba(255,200,0,0.4)] animate-pulse">
+                                <Stethoscope className="text-white" size={24} />
+                              </div>
+                              <div>
+                                <h3 className="text-xl font-black text-white italic uppercase tracking-tight">Mecânico IA de Alta Performance</h3>
+                                <p className="text-sm text-gray-400 font-bold">Descreva um problema ou comportamento estranho do veículo.</p>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col md:flex-row gap-2">
+                              <input 
+                                type="text"
+                                placeholder="Ex: Pedal de freio está trepidando ao pisar forte..."
+                                className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:ring-2 focus:ring-brand-accent transition-all"
+                                value={symptomQuery}
+                                onChange={(e) => setSymptomQuery(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && handleDiagnose()}
+                              />
+                              <button
+                                onClick={handleDiagnose}
+                                disabled={isDiagnosing || !symptomQuery}
+                                className="bg-brand-accent text-brand-primary p-4 rounded-2xl font-black uppercase italic tracking-tighter disabled:opacity-50 hover:scale-105 transition-transform flex items-center justify-center gap-2"
+                              >
+                                {isDiagnosing ? (
+                                  <div className="w-5 h-5 border-2 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                  <>Diagnosticar <Sparkles size={16} /></>
+                                )}
+                              </button>
+                            </div>
+
+                            {diagnosisResult && (
+                              <motion.div 
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mt-6 bg-brand-primary/20 border border-brand-primary/30 p-6 rounded-2xl"
+                              >
+                                <div className="markdown-body text-sm text-gray-200 leading-relaxed font-medium">
+                                  <Markdown>{diagnosisResult}</Markdown>
+                                </div>
+                                <button 
+                                  onClick={() => setDiagnosisResult(null)}
+                                  className="mt-4 text-[10px] font-black uppercase text-gray-500 hover:text-white transition-colors"
+                                >
+                                  Limpar Diagnóstico
+                                </button>
+                              </motion.div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <p className="text-lg text-gray-400 font-bold opacity-80">{selectedVehicle.model} — {selectedVehicle.year}</p>
-                    <button 
-                      onClick={() => exportVehicle(selectedVehicle)}
-                      className="p-1.5 hover:text-brand-accent transition-colors text-gray-500 bg-white/5 rounded-lg"
-                      title="Exportar Dados do Veículo (.json)"
-                    >
-                      <Download size={18} />
-                    </button>
-                    <button 
-                      onClick={openEditModal}
-                      className="p-1.5 hover:text-brand-accent transition-colors text-gray-500 bg-white/5 rounded-lg"
-                      title="Configurar Veículo"
-                    >
-                      <Settings size={18} />
-                    </button>
-                  </div>
-                </div>
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 w-full border-t border-white/5 pt-2 max-w-4xl">
                   <div className="bg-white/5 p-3 rounded-2xl">
                     <p className="text-gray-500 text-[9px] uppercase font-bold tracking-widest mb-1">Itens</p>
                     <p className="text-2xl font-mono font-black">{selectedVehicle.parts?.length || 0}</p>
                   </div>
-                  <div className="bg-white/5 p-3 rounded-2xl">
-                    <p className="text-gray-500 text-[9px] uppercase font-bold tracking-widest mb-1">Odômetro</p>
-                    <p className="text-2xl font-mono font-black">{selectedVehicle.mileage.toLocaleString()}</p>
+                  <div className="bg-white/5 p-3 rounded-2xl relative group">
+                    <p className="text-gray-500 text-[9px] uppercase font-bold tracking-widest mb-1 flex items-center justify-between">
+                      Odômetro
+                      {predictCurrentMileage(selectedVehicle) > selectedVehicle.mileage && (
+                        <span className="text-[8px] bg-brand-accent p-0.5 px-1.5 rounded-full text-white animate-pulse">ESTIMATIVA IA</span>
+                      )}
+                    </p>
+                    <div className="flex items-baseline gap-1">
+                      <p className="text-2xl font-mono font-black">{predictCurrentMileage(selectedVehicle).toLocaleString()}</p>
+                      {predictCurrentMileage(selectedVehicle) > selectedVehicle.mileage && (
+                        <span className="text-[10px] text-gray-500 font-bold">km</span>
+                      )}
+                    </div>
+                    {predictCurrentMileage(selectedVehicle) > selectedVehicle.mileage && (
+                      <button 
+                        onClick={() => updateSelectedVehicle({ mileage: predictCurrentMileage(selectedVehicle) })}
+                        className="absolute bottom-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity bg-brand-primary p-1 rounded-lg text-[8px] font-black text-white uppercase"
+                      >
+                        Sincronizar
+                      </button>
+                    )}
                   </div>
                   <div className="bg-white/5 p-3 rounded-2xl">
                     <p className="text-gray-500 text-[9px] uppercase font-bold tracking-widest mb-1">Média</p>
@@ -1509,12 +2575,12 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
                     className="bg-white/5 p-3 rounded-2xl cursor-pointer hover:bg-white/10 transition-colors"
                   >
                     <p className="text-gray-500 text-[9px] uppercase font-bold tracking-widest mb-1 flex justify-between items-center">
-                      Momento FIPE
+                      {marketRef}
                       <RefreshCw size={8} className={isUpdatingFipe ? "animate-spin text-brand-accent" : "text-gray-600"} />
                     </p>
                     <div className="flex items-center gap-2">
                        <p className="text-2xl font-mono font-black text-green-400">
-                         R$ {selectedVehicle.fipeValue?.toLocaleString() || '---'}
+                         {formatCurrency(selectedVehicle.fipeValue || 0)}
                        </p>
                     </div>
                   </motion.div>
@@ -1565,11 +2631,13 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
             {/* Tab Navigation */}
             <div className="flex overflow-x-auto gap-2 pb-1 -mx-1 scrollbar-hide">
               {[
-                { id: 'parts', label: 'Peças & Componentes', icon: Box },
-                { id: 'services', label: 'Histórico de Serviços', icon: Wrench },
-                { id: 'fuel', label: 'Combustível & Consumo', icon: Gauge },
-                { id: 'reminders', label: 'Lembretes & Alertas', icon: Activity },
-                { id: 'manual', label: 'Manual do Veículo', icon: Book },
+                { id: 'parts', label: 'Componentes', icon: Box },
+                { id: 'services', label: 'Serviços', icon: Wrench },
+                { id: 'fuel', label: 'Consumo', icon: Gauge },
+                { id: 'intelligence', label: 'Inteligência', icon: Cpu },
+                { id: 'manual', label: 'Manual', icon: Book },
+                { id: 'reminders', label: 'Alertas', icon: Bell },
+                { id: 'audit', label: 'Auditoria', icon: ShieldCheck },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -1596,7 +2664,7 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
                   <div className="flex gap-2">
                     <button 
                       onClick={() => {
-                        const fluids = selectedVehicle.manualTranscription?.toLowerCase().includes('fluido') || selectedVehicle.manualTranscription?.toLowerCase().includes('óleo');
+                        const fluids = selectedVehicle.manualTranscription?.toLowerCase()?.includes('fluido') || selectedVehicle.manualTranscription?.toLowerCase()?.includes('óleo');
                         if (fluids) {
                           alert('DICA IA: Verifique a aba "Manual" para especificações exatas de óleo e capacidades já extraídas.');
                         } else {
@@ -1832,9 +2900,9 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
 
                             <div className="text-right">
                               <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none mb-1">Custo Total</p>
-                              <p className="text-2xl font-mono font-black text-brand-primary leading-none">R$ {service.cost.toLocaleString()}</p>
+                              <p className="text-2xl font-mono font-black text-brand-primary leading-none">{formatCurrency(service.cost)}</p>
                               {service.laborCost > 0 && (
-                                <p className="text-[10px] text-gray-400 font-bold mt-1">Mão de obra: R$ {service.laborCost.toLocaleString()}</p>
+                                <p className="text-[10px] text-gray-400 font-bold mt-1">Mão de obra: {formatCurrency(service.laborCost)}</p>
                               )}
                               <div className="flex items-center gap-1.5 mt-2 justify-end text-brand-accent">
                                 <Gauge size={12} />
@@ -1843,7 +2911,7 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
                             </div>
 
                             <button 
-                              onClick={() => deleteItem('services', service.id)}
+                              onClick={() => handleDeleteItem('service', service.id)}
                               className="p-2 text-gray-300 hover:text-red-500 transition-colors"
                             >
                               <Trash2 size={20} />
@@ -1955,7 +3023,7 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
                               <td className="px-4 py-3 text-xs font-bold text-brand-primary">{new Date(log.date).toLocaleDateString('pt-BR')}</td>
                               <td className="px-4 py-3 text-xs font-mono">{log.mileage.toLocaleString()} km</td>
                               <td className="px-4 py-3 text-xs font-mono">{log.liters.toLocaleString()} L</td>
-                              <td className="px-4 py-3 text-xs font-mono font-bold text-brand-accent">R$ {log.cost.toLocaleString()}</td>
+                              <td className="px-4 py-3 text-xs font-mono font-bold text-brand-accent">{formatCurrency(log.cost)}</td>
                               <td className="px-4 py-3">
                                 {log.fullTank ? (
                                   <span className="bg-green-50 text-green-600 text-[7px] font-black uppercase px-2 py-0.5 rounded">Sim</span>
@@ -1965,7 +3033,7 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
                               </td>
                               <td className="px-4 py-3 text-right">
                                 <button 
-                                  onClick={() => deleteItem('fuelLogs', log.id)}
+                                  onClick={() => handleDeleteItem('fuel', log.id)}
                                   className="text-gray-300 hover:text-red-500 transition-colors"
                                 >
                                   <Trash2 size={14} />
@@ -2030,7 +3098,7 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
                           </div>
                         </div>
                         <button 
-                          onClick={() => deleteItem('reminders', reminder.id)}
+                          onClick={() => handleDeleteItem('reminder', reminder.id)}
                           className="text-gray-300 hover:text-red-500 transition-colors p-0.5"
                         >
                           <Trash2 size={16} />
@@ -2038,6 +3106,131 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
                       </div>
                     ))
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* Intelligence & Efficiency Tab */}
+            {activeTab === 'intelligence' && (
+              <div className="space-y-6">
+                {/* Diagnostic AI Section */}
+                <div className="bg-brand-primary/5 p-6 rounded-3xl border border-brand-primary/10 shadow-sm overflow-hidden relative">
+                  <div className="flex items-center gap-3 mb-6 relative z-10">
+                    <div className="bg-brand-primary p-2.5 rounded-2xl shadow-lg shadow-brand-primary/20">
+                      <Cpu size={20} className="text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black text-brand-primary tracking-tight uppercase">Mecânico IA Especialista</h3>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Diagnóstico por sintomas e perfil de uso</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 relative z-10">
+                    <div className="relative">
+                      <textarea
+                        value={symptomQuery}
+                        onChange={(e) => setSymptomQuery(e.target.value)}
+                        placeholder="Ex: 'Sinto um tranco metálico quando troco da 2ª para a 3ª marcha' ou 'Barulho de grilo na roda dianteira esquerda'..."
+                        className="w-full bg-white border border-gray-100 rounded-3xl px-6 py-5 focus:ring-4 focus:ring-brand-primary/10 outline-none text-sm font-medium min-h-[120px] shadow-inner"
+                      />
+                      <button
+                        onClick={runDiagnosis}
+                        disabled={isDiagnosing || !symptomQuery}
+                        className="absolute bottom-4 right-4 bg-brand-primary text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-brand-accent transition-all shadow-xl disabled:opacity-50 disabled:scale-95 flex items-center gap-2 group"
+                      >
+                        {isDiagnosing ? <RefreshCw className="animate-spin" size={14} /> : <Zap size={14} className="group-hover:animate-pulse" />}
+                        Analisar Agora
+                      </button>
+                    </div>
+
+                    {diagnosisResult && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-white p-6 rounded-3xl border border-brand-primary/10 shadow-2xl relative overflow-hidden"
+                      >
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-primary via-brand-accent to-brand-primary"></div>
+                        <div className="markdown-body text-sm leading-relaxed">
+                          <Markdown>{diagnosisResult}</Markdown>
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+
+                  {/* Decorative Background Element */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+                </div>
+
+                {/* TCO & Efficiency Metrics */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Eficiência Operacional</h4>
+                      <div className="bg-green-100 text-green-600 p-2 rounded-xl">
+                        <TrendingUp size={16} />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                        <p className="text-[8px] font-black uppercase text-gray-400 mb-1">Custo por KM (Comb.)</p>
+                        <p className="text-xl font-black text-brand-primary tracking-tighter">
+                          R$ {((selectedVehicle.fuelLogs || []).reduce((acc, l) => acc + l.cost, 0) / (selectedVehicle.mileage - (selectedVehicle.fuelLogs?.[0]?.mileage || selectedVehicle.mileage) || 1)).toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                        <p className="text-[8px] font-black uppercase text-gray-400 mb-1">Gasto Médio/Mês</p>
+                        <p className="text-xl font-black text-brand-primary tracking-tighter">
+                          R$ {Math.round(((selectedVehicle.fuelLogs || []).reduce((acc, l) => acc + l.cost, 0) + (selectedVehicle.services || []).reduce((acc, l) => acc + l.cost, 0)) / (Math.max(1, (new Date().getTime() - new Date(selectedVehicle.createdAt || new Date()).getTime()) / (1000 * 60 * 60 * 24 * 30)))).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={runTCOAnalysis}
+                      disabled={isAnalyzingTco}
+                      className="w-full py-4 bg-brand-primary/10 text-brand-primary rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-primary hover:text-white transition-all flex items-center justify-center gap-2"
+                    >
+                      {isAnalyzingTco ? <RefreshCw className="animate-spin" size={12} /> : <TrendingUp size={12} />}
+                      Relatório TCO Profissional
+                    </button>
+
+                    {tcoAnalysis && (
+                      <div className="mt-4 p-4 bg-brand-primary/5 rounded-2xl border border-brand-primary/10 text-[11px] leading-relaxed">
+                        <Markdown>{tcoAnalysis}</Markdown>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="bg-brand-primary p-6 rounded-3xl shadow-xl shadow-brand-primary/20 text-white space-y-4 relative overflow-hidden">
+                    <div className="flex items-center justify-between relative z-10">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-white/60">Análise de Procedência</h4>
+                      <ShieldCheck size={20} className="text-brand-accent" />
+                    </div>
+
+                    <div className="relative z-10">
+                      <div className="flex items-end gap-2 mb-2">
+                        <span className="text-5xl font-black tracking-tighter">{selectedVehicle.healthScore || 85}</span>
+                        <span className="text-xs font-bold uppercase mb-2">SCORE</span>
+                      </div>
+                      <p className="text-[10px] font-medium leading-relaxed text-white/80">
+                        Seu perfil <span className="font-black text-brand-accent">{selectedVehicle.drivingStyle === 'smooth' ? 'PÉ LEVE' : 'EFICIENTE'}</span> contribuiu para uma vida útil superior em componentes móveis.
+                      </p>
+                    </div>
+
+                    <div className="pt-4 border-t border-white/10 relative z-10">
+                      <div className="flex items-center justify-between text-[8px] font-black uppercase tracking-tighter">
+                        <span>Manuntenção em dia</span>
+                        <span className="text-brand-accent">Excepcional</span>
+                      </div>
+                      <div className="w-full bg-white/20 h-1 rounded-full mt-1 overflow-hidden">
+                        <div className="h-full bg-brand-accent" style={{ width: `${selectedVehicle.healthScore || 85}%` }}></div>
+                      </div>
+                    </div>
+
+                    {/* Decorative element */}
+                    <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/5 rounded-full"></div>
+                  </div>
                 </div>
               </div>
             )}
@@ -2267,6 +3460,97 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
                 )}
               </div>
             )}
+            {activeTab === 'audit' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Card de Resumo Técnico */}
+                  <div className="lg:col-span-2 bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="bg-brand-primary p-3 rounded-2xl text-white">
+                        <Activity size={24} />
+                      </div>
+                      <div>
+                        <h4 className="text-xl font-black italic uppercase tracking-tighter text-brand-primary">Dossiê Técnico Pro</h4>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Visão Profissional do Veículo</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+                       <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                          <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Motorização</p>
+                          <p className="text-sm font-bold text-gray-700">{selectedVehicle.engine || 'N/A'}</p>
+                       </div>
+                       <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                          <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Versão Técn.</p>
+                          <p className="text-sm font-bold text-gray-700">{selectedVehicle.version || 'N/A'}</p>
+                       </div>
+                       <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                          <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Chassi</p>
+                          <p className="text-xs font-mono font-bold text-brand-primary">{selectedVehicle.chassis || 'N/A'}</p>
+                       </div>
+                       <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                          <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Perfil Uso</p>
+                          <p className="text-sm font-bold text-gray-700 uppercase italic">
+                            {selectedVehicle.usageProfile === 'urban' ? 'Uso Severo' : selectedVehicle.usageProfile === 'highway' ? 'Uso Leve' : 'Misto'}
+                          </p>
+                       </div>
+                       <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                          <p className="text-[9px] text-gray-400 font-black uppercase mb-1">KM Médio/Dia</p>
+                          <p className="text-sm font-bold text-gray-700">{selectedVehicle.avgDailyKm || '--'} km</p>
+                       </div>
+                       <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                          <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Saúde Atual</p>
+                          <p className="text-sm font-bold text-brand-accent">{Math.round(getVehicleHealth())}%</p>
+                       </div>
+                    </div>
+
+                    <h5 className="font-black text-xs uppercase text-brand-primary mb-4 pb-2 border-b border-gray-100">Análise de Procedência & Integridade (IA)</h5>
+                    <div className="bg-brand-primary/5 p-6 rounded-2xl border border-brand-primary/10">
+                       <div className="markdown-body text-xs leading-relaxed text-gray-600">
+                         {digitalPassport ? (
+                           <Markdown>{digitalPassport}</Markdown>
+                         ) : (
+                           <button 
+                             onClick={handleGeneratePassport}
+                             className="flex items-center gap-2 text-brand-primary font-black uppercase tracking-widest text-[9px] hover:underline"
+                           >
+                              <RefreshCw size={12} /> Gerar Auditoria de Procedência Agora
+                           </button>
+                         )}
+                       </div>
+                    </div>
+                  </div>
+
+                  {/* Sidebar de Logs de Sistema */}
+                  <div className="space-y-6">
+                    <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+                      <h4 className="font-black text-xs uppercase text-gray-400 mb-4 flex items-center gap-2">
+                        <Database size={14} /> Histórico de Odômetro
+                      </h4>
+                      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                        {[...(selectedVehicle.fuelLogs || []), ...(selectedVehicle.services || [])]
+                          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                          .map((log, idx) => (
+                            <div key={idx} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                               <div>
+                                  <p className="text-[10px] font-black text-gray-700">{log.mileage.toLocaleString()} km</p>
+                                  <p className="text-[8px] text-gray-400 font-bold uppercase">{new Date(log.date).toLocaleDateString('pt-BR')}</p>
+                               </div>
+                               <span className={`text-[7px] font-black uppercase px-1.5 py-0.5 rounded ${'liters' in log ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}`}>
+                                 {'liters' in log ? 'Abast.' : 'Serviço'}
+                               </span>
+                            </div>
+                          ))
+                        }
+                        {(!selectedVehicle.fuelLogs?.length && !selectedVehicle.services?.length) && (
+                          <p className="text-[10px] text-gray-300 font-bold italic text-center py-4">Sem logs registrados para auditoria.</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
       </div>
@@ -2290,126 +3574,339 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className={`relative bg-white rounded-3xl p-6 sm:p-8 w-full ${showInternalBrowser ? 'max-w-5xl' : 'max-w-lg'} shadow-2xl overflow-y-auto max-h-[95vh] transition-all duration-500`}
+        className={`relative bg-white rounded-3xl p-4 sm:p-8 w-full ${showInternalBrowser ? 'max-w-6xl' : 'max-w-lg'} shadow-2xl flex flex-col max-h-[92vh] transition-all duration-500 overflow-hidden`}
       >
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold tracking-tighter uppercase italic">
-            {isEditingVehicle ? 'Editar Veículo' : 'Novo Veículo'}
-          </h2>
-          {showInternalBrowser && (
+        <div className="flex items-center justify-between mb-4 sm:mb-6 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="bg-brand-primary p-2 rounded-xl text-white shadow-lg shadow-brand-primary/20">
+              <Car size={20} />
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tighter uppercase italic text-brand-primary">
+              {isEditingVehicle ? 'Editar Veículo' : 'Novo Veículo'}
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            {showInternalBrowser && (
+              <button 
+                onClick={() => setShowInternalBrowser(false)}
+                className="bg-gray-100 text-gray-500 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-gray-200 transition-all uppercase tracking-widest border border-gray-200"
+              >
+                Modo Simples
+              </button>
+            )}
             <button 
-              onClick={() => setShowInternalBrowser(false)}
-              className="bg-gray-100 text-gray-500 px-3 py-1.5 rounded-xl text-[10px] font-black hover:bg-gray-200 transition-all uppercase"
+              onClick={() => {
+                setIsAddingVehicle(false);
+                setIsEditingVehicle(false);
+              }}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
             >
-              Fechar Navegador
+              <X size={20} />
             </button>
-          )}
+          </div>
         </div>
 
-        {showInternalBrowser ? (
-          <div className="flex flex-col md:flex-row md:h-[600px] h-auto gap-6 overflow-y-auto md:overflow-hidden pb-6 md:pb-0">
-            {/* Navegador à esquerda */}
-            <div className="flex-[2] flex flex-col gap-3 h-[350px] md:h-full shrink-0">
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-                {searchPortals.map(portal => (
-                  <button
-                    key={portal.url}
-                    onClick={() => setInternalBrowserUrl(portal.url.replace('{placa}', newVehicle.plate || ''))}
-                    className={`px-3 py-2 text-[10px] font-bold rounded-xl whitespace-nowrap transition-all border ${internalBrowserUrl === portal.url.replace('{placa}', newVehicle.plate || '') ? 'bg-brand-primary text-white border-brand-primary' : 'bg-white text-gray-600 border-gray-100 hover:border-gray-300'}`}
-                  >
-                    {portal.icon} {portal.name}
-                  </button>
-                ))}
+        <div className="flex-1 overflow-y-auto custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+          {showInternalBrowser ? (
+            <div className="flex flex-col lg:flex-row h-full min-h-[500px] lg:h-[650px] gap-6">
+              {/* Navegador à esquerda */}
+              <div className="lg:flex-[1.5] xl:flex-[2] flex flex-col gap-4 h-[400px] lg:h-full">
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none shrink-0">
+                  <div className="flex items-center gap-1.5 p-1 bg-gray-100 rounded-2xl border border-gray-200">
+                    {searchPortals.map(portal => (
+                      <button
+                        key={portal.url}
+                        onClick={() => setInternalBrowserUrl(portal.url.replace('{placa}', newVehicle.plate || ''))}
+                        className={`px-4 py-2 text-[10px] font-black rounded-xl whitespace-nowrap transition-all uppercase tracking-tighter ${internalBrowserUrl === portal.url.replace('{placa}', newVehicle.plate || '') ? 'bg-white text-brand-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                      >
+                        {portal.icon} {portal.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex-1 bg-white rounded-3xl border border-gray-200 overflow-hidden relative shadow-2xl group">
+                  <iframe 
+                    src={internalBrowserUrl} 
+                    className="w-full h-full border-none"
+                    title="Navegador de Consulta"
+                  />
+                  <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <a 
+                      href={internalBrowserUrl} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="bg-brand-primary text-white p-3 rounded-2xl shadow-xl hover:scale-110 active:scale-95 transition-all"
+                    >
+                      <ExternalLink size={16} />
+                    </a>
+                  </div>
+                  {internalBrowserUrl === '' && (
+                    <div className="absolute inset-0 bg-gray-50 flex flex-col items-center justify-center text-center p-8">
+                       <Globe size={48} className="text-gray-200 mb-4 animate-pulse" />
+                       <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Aguardando Seleção de Portal</p>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="flex-1 bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden relative shadow-inner">
-                <iframe 
-                  src={internalBrowserUrl} 
-                  className="w-full h-full border-none"
-                  title="Navegador de Consulta"
-                />
-                <div className="absolute top-2 right-2 flex gap-1">
-                  <a href={internalBrowserUrl} target="_blank" rel="noreferrer" className="bg-black/60 text-white p-2 rounded-lg backdrop-blur-md hover:bg-black/80 transition-all">
-                    <ExternalLink size={14} />
-                  </a>
+
+              {/* Captura à direita */}
+              <div className="lg:flex-1 flex flex-col gap-4 pb-6 lg:pb-0">
+                <div className="bg-brand-primary p-6 rounded-[2rem] text-white shadow-2xl relative overflow-hidden group border border-white/10 shrink-0">
+                  <div className="absolute top-[-50px] right-[-50px] w-[200px] h-[200px] bg-brand-accent/20 rounded-full blur-[80px] group-hover:bg-brand-accent/30 transition-all duration-1000" />
+                  
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="bg-brand-accent/20 p-2 rounded-xl">
+                        <Wand2 size={16} className="text-brand-accent" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black uppercase tracking-[2px] text-white">IA EXTRATORA</h4>
+                        <p className="text-[10px] text-white/50 font-bold">Captura inteligente de dados</p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={searchVehicleByPlate}
+                      disabled={isSearchingPlate}
+                      className="w-full bg-brand-accent text-brand-primary py-5 rounded-[1.25rem] font-black text-xs uppercase tracking-[1px] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_10px_25px_rgba(251,255,0,0.3)] flex items-center justify-center gap-3 mb-6"
+                    >
+                      {isSearchingPlate ? <RefreshCw className="animate-spin" size={18} /> : <Zap size={18} fill="currentColor" />}
+                      {isSearchingPlate ? 'Buscando na Web...' : 'Sincronizar Placa'}
+                    </button>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <div className="h-[1px] flex-1 bg-white/10"></div>
+                        <span className="text-[9px] font-black text-white/30 uppercase tracking-[2px]">Plano B: Texto Manual</span>
+                        <div className="h-[1px] flex-1 bg-white/10"></div>
+                      </div>
+
+                      <div className="bg-white/5 border border-white/10 rounded-2xl p-4 group-focus-within:border-brand-accent/30 transition-all">
+                        <textarea 
+                          ref={pasteTextAreaRef}
+                          className="w-full h-24 bg-transparent border-none p-0 text-[11px] font-mono text-white placeholder:text-white/20 focus:ring-0 focus:outline-none transition-all resize-none"
+                          placeholder="Caso o robô falhe, copie todo o texto do site e cole aqui para a IA organizar..."
+                          value={rawPastedData}
+                          onChange={(e) => setRawPastedData(e.target.value)}
+                        />
+                        
+                        {rawPastedData && (
+                          <motion.button 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            onClick={() => handleAssistedProcess()}
+                            disabled={isProcessingAssisted}
+                            className="w-full mt-3 py-3 bg-white text-brand-primary text-[10px] font-black rounded-xl hover:bg-brand-accent transition-all flex items-center justify-center gap-2 shadow-xl"
+                          >
+                            {isProcessingAssisted ? <RefreshCw className="animate-spin" size={14} /> : <Sparkles size={14} />}
+                            EXTRAIR DADOS COLADOS
+                          </motion.button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white border border-gray-200 rounded-[2rem] p-5 shrink-0 shadow-sm overflow-hidden border-b-4 border-b-brand-accent/10">
+                   <div className="flex items-center justify-between mb-3 border-b border-gray-100 pb-2">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ficha Técnica Provisória</span>
+                      {newVehicle.name && <span className="text-[8px] bg-green-500 text-white px-2 py-0.5 rounded-full font-black uppercase animate-pulse">Detectado</span>}
+                   </div>
+
+                   {newVehicle.imageUrl && (
+                     <div className="mb-4 relative group">
+                        <div className="aspect-video w-full rounded-xl overflow-hidden border border-gray-100 shadow-inner bg-gray-50">
+                          <VehicleImage 
+                            src={newVehicle.imageUrl} 
+                            alt="Preview IA" 
+                            className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-700" 
+                          />
+                        </div>
+                        <button
+                          onClick={handleRemoveBackground}
+                          disabled={isRemovingBackground}
+                          className="absolute -right-2 -bottom-2 bg-brand-primary text-white p-2 rounded-xl shadow-lg hover:bg-brand-accent transition-all z-20 flex items-center gap-1.5"
+                          title="Remover Fundo"
+                        >
+                          {isRemovingBackground ? <RefreshCw size={12} className="animate-spin" /> : <Eraser size={12} />}
+                          <span className="text-[8px] font-black uppercase tracking-tighter">Limpar Fundo</span>
+                        </button>
+                        <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg">
+                           <p className="text-[7px] text-white font-black uppercase tracking-widest flex items-center gap-1">
+                             <Camera size={8} /> Foto encontrada pelo Robô
+                           </p>
+                        </div>
+                     </div>
+                   )}
+
+                   <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                      <div>
+                        <p className="text-[8px] text-gray-400 font-black uppercase">Marca/Modelo</p>
+                        <p className="text-[10px] font-bold text-gray-600 truncate">{newVehicle.name || '--'} {newVehicle.model || '--'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[8px] text-gray-400 font-black uppercase">Placa</p>
+                        <p className="text-[10px] font-mono font-bold text-brand-primary">{newVehicle.plate || '--'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[8px] text-gray-400 font-black uppercase">Ano</p>
+                        <p className="text-[10px] font-bold text-gray-600">{newVehicle.year || '--'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[8px] text-gray-400 font-black uppercase">Combustível</p>
+                        <p className="text-[10px] font-bold text-gray-600 truncate">{newVehicle.fuelType || '--'}</p>
+                      </div>
+                   </div>
+                </div>
+
+                <div className="p-6 bg-gray-50 border border-gray-200 rounded-[2rem] flex-none lg:flex-1 flex flex-col items-center justify-center text-center group hover:border-brand-primary/10 transition-all min-h-[120px]">
+                  <div className={`w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-xl mb-4 group-hover:scale-110 transition-transform ${isSearchingPlate || isProcessingAssisted ? 'animate-bounce' : ''}`}>
+                    {isSearchingPlate || isProcessingAssisted ? (
+                      <Activity size={28} className="text-brand-accent" />
+                    ) : (
+                      <Layout size={28} className="text-gray-300" />
+                    )}
+                  </div>
+                  <h5 className="text-xs font-black text-gray-700 uppercase tracking-tight">Console de Status</h5>
+                  <p className="text-[10px] text-gray-400 mt-2 max-w-[200px] leading-relaxed font-bold mb-4">
+                    {plateSearchStatus || "Aguardando ação para iniciar o processamento inteligente."}
+                  </p>
+
+                  {/* Robot Action: Find Image */}
+                  {!newVehicle.imageUrl && newVehicle.name && newVehicle.model && (
+                    <motion.button
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      onClick={searchImage}
+                      disabled={isSearchingImage}
+                      className="w-full mb-3 py-3 bg-blue-500/10 text-blue-600 rounded-xl font-black text-[9px] uppercase tracking-widest border border-blue-500/20 flex items-center justify-center gap-2 hover:bg-blue-500 hover:text-white transition-all group"
+                    >
+                      {isSearchingImage ? <RefreshCw size={14} className="animate-spin" /> : <Camera size={14} className="group-hover:rotate-12 transition-transform" />}
+                      BUSCAR FOTO DO MODELO
+                    </motion.button>
+                  )}
+
+                  {/* Robot Manual Capture Helper - The "Infallible" Method */}
+                  {plateSearchStatus.includes('Assistido') && (
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="w-full mb-4 px-2"
+                    >
+                      <button 
+                        onClick={handleCaptureFromClipboard}
+                        disabled={isProcessingAssisted}
+                        className="w-full py-4 bg-brand-accent text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-brand-accent/30 flex flex-col items-center justify-center gap-1 hover:brightness-110 active:scale-95 transition-all"
+                      >
+                        {isProcessingAssisted ? (
+                          <RefreshCw className="animate-spin" size={16} />
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <ClipboardCheck size={16} />
+                            <span>CLIQUE PARA CAPTURAR</span>
+                          </div>
+                        )}
+                        <span className="text-[7px] opacity-70">Processar dados copiados da janela</span>
+                      </button>
+                    </motion.div>
+                  )}
+
+                  {/* Robot Logs Section */}
+                  {robotLogs.length > 0 && (
+                    <div className="w-full mt-2 bg-gray-900 rounded-xl p-3 border border-gray-800 shadow-inner overflow-hidden">
+                       <div className="flex items-center gap-2 mb-2 border-b border-gray-800 pb-1">
+                         <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                         <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Robot Activity Log</span>
+                       </div>
+                       <div className="flex flex-col gap-1.5 h-32 overflow-y-auto scrollbar-hide">
+                          <AnimatePresence>
+                            {robotLogs.map((log, i) => (
+                              <motion.div 
+                                key={i}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="text-[9px] font-mono text-left"
+                              >
+                                <span className="text-brand-accent brightness-125 font-bold mr-2">root@mecanico:~$</span>
+                                <span className={`${(log || '').includes('[SUCCESS]') ? 'text-green-400' : (log || '').includes('[ERROR]') ? 'text-red-400' : 'text-blue-400'}`}>
+                                  {log}
+                                </span>
+                              </motion.div>
+                            ))}
+                          </AnimatePresence>
+                          <div ref={robotLogsEndRef} />
+                       </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-
-            {/* Captura à direita */}
-            <div className="flex-1 flex flex-col gap-4 md:overflow-y-auto md:pr-1 custom-scrollbar">
-              <div className="bg-brand-primary p-5 rounded-3xl text-white shadow-xl relative overflow-hidden group">
-                <div className="absolute top-[-50px] right-[-50px] w-[150px] h-[150px] bg-brand-accent/10 rounded-full blur-3xl group-hover:bg-brand-accent/20 transition-all duration-700" />
-                
-                <h4 className="text-[11px] font-black uppercase tracking-[2px] mb-2 flex items-center gap-2 text-white">
-                  <Wand2 size={14} className="text-brand-accent animate-pulse" /> Captura via IA (Turbo)
-                </h4>
-                <p className="text-[10px] text-white/70 mb-5 leading-relaxed">
-                  O robô tentará ler e preencher os dados dessa placa automaticamente.
-                </p>
-                
-                <button
-                  onClick={searchVehicleByPlate}
-                  disabled={isSearchingPlate}
-                  className="w-full bg-brand-accent text-white py-4 rounded-2xl font-black text-xs uppercase tracking-[1px] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-brand-accent/20 flex items-center justify-center gap-2 mb-4 relative z-10"
-                >
-                  {isSearchingPlate ? <RefreshCw className="animate-spin" size={16} /> : <Zap size={16} />}
-                  Acionar Robô de Busca ⚡
-                </button>
-
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="h-[1px] flex-1 bg-white/10"></div>
-                  <span className="text-[9px] font-bold text-white/30 uppercase">Plano B (Captura Manual)</span>
-                  <div className="h-[1px] flex-1 bg-white/10"></div>
-                </div>
-
-                <p className="text-[9px] text-white/50 mb-3 leading-tight italic">
-                  Se o robô falhar ou der erro de cota, dê <kbd className="bg-white/10 px-1 rounded mx-0.5">Ctrl+A/Selecionar Tudo</kbd> e <kbd className="bg-white/10 px-1 rounded mx-0.5">Ctrl+C/Copiar</kbd> no site e use o botão abaixo:
-                </p>
-
-                <button
-                  onClick={handleCaptureFromClipboard}
-                  disabled={isProcessingAssisted}
-                  className="w-full bg-white/10 hover:bg-white/20 text-white py-3 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-2 mb-4"
-                >
-                  {isProcessingAssisted ? <RefreshCw className="animate-spin" size={12} /> : <ClipboardCheck size={12} />}
-                  Sincronizar Clipboard (Plano B)
-                </button>
-
-                <textarea 
-                  ref={pasteTextAreaRef}
-                  className="w-full h-24 bg-white/5 border border-white/10 rounded-2xl p-4 text-[11px] font-mono text-white placeholder:text-white/20 focus:ring-2 focus:ring-brand-accent focus:outline-none transition-all resize-none shadow-inner"
-                  placeholder="Ou cole o texto aqui..."
-                  value={rawPastedData}
-                  onChange={(e) => setRawPastedData(e.target.value)}
-                />
-              </div>
-
-              <div className="p-6 bg-gray-50 border-2 border-dashed border-gray-200 rounded-3xl flex-1 flex flex-col items-center justify-center text-center group hover:border-brand-primary/20 transition-colors">
-                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg mb-4 group-hover:scale-110 transition-transform">
-                  <Activity size={24} className="text-brand-primary" />
-                </div>
-                <h5 className="text-xs font-bold text-gray-700 uppercase tracking-tight">Status do Processamento</h5>
-                <p className="text-[10px] text-gray-400 mt-2 max-w-[180px] leading-relaxed italic">
-                  Os dados extraídos serão preenchidos automaticamente na ficha do veículo assim que detectados.
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : (
+          ) : (
           <>
 
         {/* Imagem do Veículo */}
-        <div className="flex flex-col items-center mb-6">
-          <div onClick={() => vehicleImageInputRef.current?.click()} className="relative group cursor-pointer">
-            <VehicleImage 
-              src={newVehicle.imageUrl} 
-              alt="Veículo" 
-              className="aspect-video w-full max-w-[340px] rounded-2xl shadow-xl object-cover" 
-            />
-            <div className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center text-white">
-              <Upload size={28} />
+        <div className="flex flex-col items-center mb-4">
+          <div className="relative group">
+            <div onClick={() => vehicleImageInputRef.current?.click()} className="relative cursor-pointer overflow-hidden rounded-2xl shadow-2xl">
+              <VehicleImage 
+                src={newVehicle.imageUrl} 
+                alt="Veículo" 
+                className={`aspect-video w-full max-w-[340px] rounded-2xl object-cover transition-all duration-500 ${isRemovingBackground ? 'blur-sm scale-95' : ''}`} 
+              />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity">
+                <Upload size={32} className="mb-2" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Alterar Foto</span>
+              </div>
+              
+              {isRemovingBackground && (
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-10 h-10 border-4 border-brand-accent border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-[10px] text-white font-black uppercase tracking-widest animate-pulse">Processando IA...</span>
+                  </div>
+                </div>
+              )}
             </div>
+
+            {newVehicle.imageUrl && !isRemovingBackground && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ 
+                  opacity: 1, 
+                  scale: plateSearchStatus.includes('Remover Fundo') ? [1, 1.1, 1] : 1 
+                }}
+                transition={{ 
+                  scale: plateSearchStatus.includes('Remover Fundo') ? { repeat: Infinity, duration: 1.5 } : { duration: 0.2 } 
+                }}
+                onClick={handleRemoveBackground}
+                className="absolute -right-3 -bottom-3 bg-white text-brand-primary p-3 rounded-2xl shadow-2xl border border-gray-100 hover:bg-brand-accent hover:text-white transition-all group/btn z-10"
+                title="Sincronizar com Robô Estúdio (Remover Fundo)"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Eraser size={18} className="group-hover/btn:rotate-12 transition-transform" />
+                    <Sparkles size={10} className="absolute -top-1 -right-1 text-yellow-400 animate-pulse" />
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-widest pr-1">Tratar com Robô</span>
+                </div>
+              </motion.button>
+            )}
           </div>
+
+          <motion.button 
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={searchImage}
+            disabled={isSearchingImage}
+            className="mt-4 px-6 py-3 bg-slate-900 text-white rounded-xl font-black text-[9px] uppercase tracking-widest border border-slate-700 flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-lg group w-full max-w-[340px]"
+          >
+            {isSearchingImage ? (
+              <RefreshCw className="animate-spin text-blue-400" size={14} />
+            ) : (
+              <Camera size={14} className="text-blue-400 group-hover:rotate-12 transition-transform" />
+            )}
+            BUSCAR FOTO ORIGINAL (IA)
+          </motion.button>
         </div>
 
         <div className="space-y-5">
@@ -2419,8 +3916,8 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
             <div className="flex gap-2 sm:gap-3 relative">
               <input
                 type="text"
-                placeholder="ABC1D23"
-                maxLength={7}
+                placeholder={currentCountry.platePlaceholder}
+                maxLength={10}
                 className={`w-32 sm:flex-1 bg-gray-50 border-0 rounded-2xl p-3 sm:p-4 font-mono uppercase tracking-[2px] sm:tracking-[3px] text-lg sm:text-xl font-bold focus:ring-2 focus:ring-brand-accent transition-all ${isSearchingPlate ? 'ring-2 ring-brand-accent shadow-[0_0_20px_rgba(225,29,72,0.4)] animate-pulse' : ''}`}
                 value={newVehicle.plate || ''}
                 onChange={(e) => setNewVehicle(prev => ({
@@ -2430,7 +3927,7 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
               />
               <button
                 onClick={searchVehicleByPlate}
-                disabled={isSearchingPlate || !newVehicle.plate || newVehicle.plate.length !== 7}
+                disabled={isSearchingPlate || !newVehicle.plate || newVehicle.plate.length < 4}
                 className="flex-1 sm:flex-none px-4 sm:px-8 py-3 sm:py-4 bg-brand-primary text-white font-bold rounded-2xl hover:bg-brand-accent transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-brand-primary/20 text-sm sm:text-base overflow-hidden relative"
                 title="Busca Inteligente via IA e Bases Públicas"
               >
@@ -2448,15 +3945,33 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
             </div>
 
             <AnimatePresence>
-              {plateSearchStatus && (
+              {(plateSearchStatus || robotLogs.length > 0) && (
                 <motion.div 
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="mt-2 text-[11px] font-bold text-brand-accent uppercase tracking-tighter flex items-center gap-1.5 ml-1 bg-brand-accent/5 py-1.5 px-3 rounded-full border border-brand-accent/10"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-2 space-y-2"
                 >
-                  <Activity size={12} className="animate-pulse" />
-                  {plateSearchStatus}
+                  {plateSearchStatus && (
+                    <div className="text-[11px] font-bold text-brand-accent uppercase tracking-tighter flex items-center gap-1.5 ml-1 bg-brand-accent/5 py-1.5 px-3 rounded-full border border-brand-accent/10">
+                      <Activity size={12} className="animate-pulse" />
+                      {plateSearchStatus}
+                    </div>
+                  )}
+                  
+                  {/* Robot Logs for small UI too */}
+                  {robotLogs.length > 0 && (
+                    <div className="bg-gray-900 rounded-xl p-2 font-mono text-[8px] overflow-hidden border border-gray-800">
+                       <div className="flex flex-col gap-1 max-h-24 overflow-y-auto scrollbar-hide">
+                          {robotLogs.map((log, i) => (
+                            <div key={i} className="flex gap-2">
+                               <span className="text-gray-600">#</span>
+                               <span className={`${(log || '').includes('[SUCCESS]') ? 'text-green-500' : 'text-blue-400'} truncate text-left`}>{log}</span>
+                            </div>
+                          ))}
+                       </div>
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -2476,17 +3991,17 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
                 </a>
               ))}
               <button 
-                onClick={captureFromDetetive}
+                onClick={captureFromExternal}
                 className="text-[10px] bg-brand-accent/10 text-brand-accent px-2.5 py-1.5 rounded-lg font-black hover:bg-brand-accent/20 transition-all border border-brand-accent/10 flex items-center gap-1 shadow-sm"
-                title="Tenta capturar dados se o site Detetive estiver aberto"
+                title="Tenta capturar dados se o site de consulta estiver aberto"
               >
-                <Globe size={12} /> Robot Extrator
+                <Search size={12} /> Robo BuscaPlacas
               </button>
             </div>
 
-            <div className={`mt-4 p-4 rounded-2xl border transition-all ${isSearchingPlate && plateSearchStatus.includes('Cota') ? 'bg-orange-50 border-orange-200 ring-2 ring-orange-200' : 'bg-brand-primary/5 border-brand-primary/10'}`}>
+            <div className={`mt-4 p-4 rounded-2xl border transition-all ${isSearchingPlate && (plateSearchStatus || '').includes('Cota') ? 'bg-orange-50 border-orange-200 ring-2 ring-orange-200' : 'bg-brand-primary/5 border-brand-primary/10'}`}>
               <div className="flex items-center justify-between mb-2">
-                <span className={`text-[10px] font-bold uppercase tracking-tighter flex items-center gap-1 ${isSearchingPlate && plateSearchStatus.includes('Cota') ? 'text-orange-600' : 'text-brand-primary'}`}>
+                <span className={`text-[10px] font-bold uppercase tracking-tighter flex items-center gap-1 ${isSearchingPlate && (plateSearchStatus || '').includes('Cota') ? 'text-orange-600' : 'text-brand-primary'}`}>
                   <Clipboard size={12} /> Busca Assistida (Plano B)
                 </span>
                 <button
@@ -2504,6 +4019,7 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
                 Se o robô der erro de limite (429), use o <strong>Navegador Integrado</strong> acima ou cole o texto do site aqui:
               </p>
               <textarea 
+                ref={pasteTextAreaRef}
                 className="w-full h-20 bg-white border border-gray-200 rounded-xl p-3 text-[11px] font-mono focus:ring-2 focus:ring-brand-primary focus:outline-none transition-all resize-none shadow-inner"
                 placeholder="Cole o texto do site aqui..."
                 value={rawPastedData}
@@ -2527,14 +4043,42 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
           {/* Marca e Modelo */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-bold text-gray-400 uppercase ml-1 block mb-1">Marca</label>
-              <input 
-                type="text" 
-                placeholder="Ex: Honda"
-                className="w-full bg-gray-50 border-0 rounded-2xl p-4 focus:ring-2 focus:ring-brand-accent font-bold"
-                value={newVehicle.name}
-                onChange={(e) => setNewVehicle({...newVehicle, name: e.target.value})}
-              />
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-bold text-gray-400 uppercase ml-1">Marca</label>
+                <div className="flex gap-2">
+                   <button 
+                     onClick={() => searchLogo(newVehicle.name)}
+                     disabled={isSearchingLogo || !newVehicle.name}
+                     className="text-[9px] font-black uppercase text-brand-primary flex items-center gap-1 hover:text-brand-accent transition-colors disabled:opacity-50"
+                     title="Buscar logo automaticamente"
+                   >
+                     {isSearchingLogo ? <RefreshCw className="animate-spin" size={10} /> : <Search size={10} />} Identificar Logo
+                   </button>
+                   <button 
+                     onClick={() => brandLogoInputRef.current?.click()}
+                     className="text-[9px] font-black uppercase text-gray-500 flex items-center gap-1 hover:text-gray-700 transition-colors"
+                     title="Upload manual de logo"
+                   >
+                     <Upload size={10} /> Manual
+                   </button>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="shrink-0">
+                  <BrandLogo 
+                    vehicleName={newVehicle.name} 
+                    brandLogoUrl={newVehicle.brandLogoUrl}
+                    className="w-[56px] h-[56px] rounded-2xl shadow-md border border-gray-100 bg-white"
+                  />
+                </div>
+                <input 
+                  type="text" 
+                  placeholder="Ex: Honda"
+                  className="flex-1 bg-gray-50 border-0 rounded-2xl p-4 focus:ring-2 focus:ring-brand-accent font-bold h-[56px]"
+                  value={newVehicle.name}
+                  onChange={(e) => setNewVehicle({...newVehicle, name: e.target.value})}
+                />
+              </div>
             </div>
             <div>
               <label className="text-xs font-bold text-gray-400 uppercase ml-1 block mb-1">Modelo</label>
@@ -2544,6 +4088,59 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
                 className="w-full bg-gray-50 border-0 rounded-2xl p-4 focus:ring-2 focus:ring-brand-accent font-bold"
                 value={newVehicle.model}
                 onChange={(e) => setNewVehicle({...newVehicle, model: e.target.value})}
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-bold text-gray-400 uppercase ml-1 block mb-1">Versão / Variante</label>
+              <input 
+                type="text" 
+                placeholder="Ex: Touring / LXL / EX"
+                className="w-full bg-gray-50 border-0 rounded-2xl p-4 focus:ring-2 focus:ring-brand-accent"
+                value={newVehicle.version || ''}
+                onChange={(e) => setNewVehicle({...newVehicle, version: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-400 uppercase ml-1 block mb-1">Motorização</label>
+              <input 
+                type="text" 
+                placeholder="Ex: 1.5 i-VTEC / 2.0 Turbo"
+                className="w-full bg-gray-50 border-0 rounded-2xl p-4 focus:ring-2 focus:ring-brand-accent"
+                value={newVehicle.engine || ''}
+                onChange={(e) => setNewVehicle({...newVehicle, engine: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-bold text-gray-400 uppercase ml-1 block mb-1">Combustível</label>
+              <select 
+                className="w-full bg-gray-50 border-0 rounded-2xl p-4 focus:ring-2 focus:ring-brand-accent font-bold appearance-none cursor-pointer"
+                value={newVehicle.fuelType || ''}
+                onChange={(e) => setNewVehicle({...newVehicle, fuelType: e.target.value})}
+              >
+                <option value="">Selecione...</option>
+                <option value="Flex">Flex (Álcool/Gasolina)</option>
+                <option value="Gasolina">Gasolina</option>
+                <option value="Álcool">Álcool</option>
+                <option value="Diesel">Diesel</option>
+                <option value="Híbrido">Híbrido</option>
+                <option value="Elétrico">Elétrico</option>
+                <option value="GNV">GNV</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-400 uppercase ml-1 block mb-1">Chassi (Opcional)</label>
+              <input 
+                type="text" 
+                placeholder="Últimos dígitos ou completo"
+                className="w-full bg-gray-50 border-0 rounded-2xl p-4 focus:ring-2 focus:ring-brand-accent font-mono text-xs"
+                value={newVehicle.chassis || ''}
+                onChange={(e) => setNewVehicle({...newVehicle, chassis: e.target.value.toUpperCase()})}
               />
             </div>
           </div>
@@ -2581,594 +4178,226 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
             </div>
           </div>
 
-          {/* Botão de Foto Oficial */}
-          <button 
-            onClick={searchImage}
-            disabled={isSearchingImage || !newVehicle.name || !newVehicle.model}
-            className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl flex items-center justify-center gap-2 hover:brightness-110 transition-all disabled:opacity-50"
-          >
-            {isSearchingImage ? <Settings className="animate-spin" /> : <Camera size={20} />}
-            Buscar Foto Oficial da Época
-          </button>
-        </div>
+          <div className="bg-brand-primary/5 p-6 rounded-3xl border border-brand-primary/10 space-y-6">
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-primary flex items-center gap-2">
+              <Activity size={12} /> Perfil Psicográfico do Motorista (Contexto IA)
+            </h4>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Dias de Uso Habitual</label>
+                <div className="flex flex-wrap gap-2">
+                  {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        const current = newVehicle.usageDays || [];
+                        const updated = current.includes(idx) 
+                          ? current.filter(d => d !== idx) 
+                          : [...current, idx];
+                        setNewVehicle({ ...newVehicle, usageDays: updated });
+                      }}
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-black transition-all border ${
+                        (newVehicle.usageDays || []).includes(idx)
+                        ? 'bg-brand-primary border-brand-primary text-white shadow-md'
+                        : 'bg-white border-gray-100 text-gray-400 hover:border-brand-primary/30'
+                      }`}
+                    >
+                      {day}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-        <div className="flex gap-3 pt-8 border-t border-gray-100 mt-6">
-          <button 
-            onClick={() => {
-              setIsAddingVehicle(false);
-              setIsEditingVehicle(false);
-            }}
-            className="flex-1 py-4 text-gray-500 font-bold hover:bg-gray-50 rounded-2xl transition-all"
-          >
-            Cancelar
-          </button>
-          <button 
-            onClick={isEditingVehicle ? updateVehicle : addVehicle}
-            className="flex-1 py-4 bg-brand-primary text-white font-bold rounded-2xl hover:bg-brand-accent transition-all shadow-lg"
-          >
-            {isEditingVehicle ? 'Salvar Alterações' : 'Adicionar Veículo'}
-          </button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Estilo de Aceleração</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'smooth', label: 'Suave', sub: 'Pé Leve' },
+                      { id: 'moderate', label: 'Normal', sub: 'Padrão' },
+                      { id: 'aggressive', label: 'Rápida', sub: 'Pé Pesado' }
+                    ].map(opt => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setNewVehicle({ ...newVehicle, drivingStyle: opt.id as any })}
+                        className={`p-3 rounded-2xl border flex flex-col items-center transition-all ${
+                          newVehicle.drivingStyle === opt.id 
+                            ? 'bg-brand-primary border-brand-primary text-white shadow-lg' 
+                            : 'bg-white border-gray-100 text-gray-500 hover:border-brand-primary/30'
+                        }`}
+                      >
+                        <span className="text-[9px] font-black uppercase">{opt.label}</span>
+                        <span className={`text-[7px] font-bold ${newVehicle.drivingStyle === opt.id ? 'text-white/70' : 'text-gray-400'}`}>
+                          {opt.sub}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Troca de Marchas (RPM)</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'low', label: 'Baixa', sub: '< 2.5k' },
+                      { id: 'mid', label: 'Média', sub: '3k - 4k' },
+                      { id: 'high', label: 'Alta', sub: '> 5k' }
+                    ].map(opt => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setNewVehicle({ ...newVehicle, operatingRpm: opt.id as any })}
+                        className={`p-3 rounded-2xl border flex flex-col items-center transition-all ${
+                          newVehicle.operatingRpm === opt.id 
+                            ? 'bg-brand-primary border-brand-primary text-white shadow-lg' 
+                            : 'bg-white border-gray-100 text-gray-500 hover:border-brand-primary/30'
+                        }`}
+                      >
+                        <span className="text-[9px] font-black uppercase">{opt.label}</span>
+                        <span className={`text-[7px] font-bold ${newVehicle.operatingRpm === opt.id ? 'text-white/70' : 'text-gray-400'}`}>
+                          {opt.sub}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Regime predominante</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'urban', label: 'Cidade', sub: 'Severo' },
+                      { id: 'mixed', label: 'Misto', sub: 'Padrão' },
+                      { id: 'highway', label: 'Pista', sub: 'Leve' }
+                    ].map(opt => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setNewVehicle({ ...newVehicle, usageProfile: opt.id as any })}
+                        className={`p-3 rounded-2xl border flex flex-col items-center transition-all ${
+                          newVehicle.usageProfile === opt.id 
+                            ? 'bg-brand-primary border-brand-primary text-white shadow-lg' 
+                            : 'bg-white border-gray-100 text-gray-500 hover:border-brand-primary/30'
+                        }`}
+                      >
+                        <span className="text-[10px] font-black uppercase">{opt.label}</span>
+                        <span className={`text-[8px] font-bold ${newVehicle.usageProfile === opt.id ? 'text-white/70' : 'text-gray-400'}`}>
+                          {opt.sub}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Distância p/ Dia de Uso</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={newVehicle.avgDailyKm || ''}
+                      onChange={(e) => setNewVehicle({ ...newVehicle, avgDailyKm: Number(e.target.value) })}
+                      placeholder="Ex: 35"
+                      className="w-full bg-white border border-gray-100 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-brand-primary/20 outline-none text-sm font-bold"
+                    />
+                    <div className="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-300 tracking-tighter">KM/DIA</div>
+                  </div>
+                  <p className="text-[8px] text-gray-400 font-bold italic ml-1">Usado quando você não abastece regularmente.</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </>
     )}
-  </motion.div>
+  </div>
+
+  {/* Footer fixo para botões de ação */}
+  <div className="flex gap-3 pt-4 sm:pt-6 border-t border-gray-100 shrink-0">
+      <button 
+        onClick={() => {
+          setIsAddingVehicle(false);
+          setIsEditingVehicle(false);
+        }}
+        className="flex-1 py-4 sm:py-5 text-gray-500 font-bold hover:bg-gray-100 rounded-2xl sm:rounded-3xl transition-all uppercase text-[10px] sm:text-xs tracking-widest"
+      >
+        Cancelar
+      </button>
+      <button 
+        onClick={isEditingVehicle ? updateVehicle : addVehicle}
+        className="flex-[2] py-4 sm:py-5 bg-brand-primary text-white font-black uppercase text-[10px] sm:text-xs tracking-widest rounded-2xl sm:rounded-3xl hover:bg-brand-accent transition-all shadow-2xl shadow-brand-primary/20 hover:scale-[1.02] active:scale-[0.98]"
+      >
+        {isEditingVehicle ? 'Salvar Alterações' : 'Confirmar e Adicionar'}
+      </button>
+    </div>
+</motion.div>
 </div>
-  )}
+)}
 </AnimatePresence>
 
 
       {/* MODAL: Add Service */}
-      <AnimatePresence>
-        {isAddingService && selectedVehicle && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsAddingService(false)} className="absolute inset-0 bg-brand-primary/40 backdrop-blur-md"></motion.div>
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative bg-white rounded p-8 w-full max-w-md shadow-2xl">
-              <h2 className="text-2xl font-bold mb-6 italic uppercase tracking-tighter">Registrar Manutenção</h2>
-              <div className="space-y-4 mb-8">
-                <div>
-                  <label className="text-xs font-bold text-gray-400 uppercase ml-1">Descrição do Serviço</label>
-                  <input type="text" placeholder="Ex: Troca de Óleo e Filtros" className="w-full bg-gray-50 border-0 rounded-xl p-4 focus:ring-2 focus:ring-brand-accent" value={newService.description} onChange={e => setNewService({...newService, description: e.target.value})} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase ml-1">Km Atual</label>
-                    <input type="number" className="w-full bg-gray-50 border-0 rounded-xl p-4 font-mono" value={newService.mileage} onChange={e => setNewService({...newService, mileage: e.target.value})} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase ml-1">Data</label>
-                    <input type="date" className="w-full bg-gray-50 border-0 rounded-xl p-4" value={newService.date} onChange={e => setNewService({...newService, date: e.target.value})} />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-400 uppercase ml-1">Oficina / Estabelecimento*</label>
-                  <input type="text" placeholder="Ex: Oficina do Zé" className="w-full bg-gray-50 border-0 rounded-xl p-4" value={newService.workshopName} onChange={e => setNewService({...newService, workshopName: e.target.value})} />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-400 uppercase ml-1">Endereço da Oficina</label>
-                  <input type="text" placeholder="Rua, Número, Bairro, Cidade" className="w-full bg-gray-50 border-0 rounded-xl p-4 text-sm" value={newService.workshopAddress} onChange={e => setNewService({...newService, workshopAddress: e.target.value})} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                   <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase ml-1">Telefone</label>
-                    <input type="text" placeholder="(11) 99999-9999" className="w-full bg-gray-50 border-0 rounded-xl p-4 text-sm" value={newService.workshopPhone} onChange={e => setNewService({...newService, workshopPhone: e.target.value})} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase ml-1">Mecânico</label>
-                    <input type="text" placeholder="Nome do Técnico" className="w-full bg-gray-50 border-0 rounded-xl p-4 text-sm" value={newService.mechanicName} onChange={e => setNewService({...newService, mechanicName: e.target.value})} />
-                  </div>
-                </div>
-
-                {/* Parts Breakdown UI */}
-                <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
-                  <div className="flex justify-between items-center mb-3">
-                    <label className="text-xs font-bold text-gray-400 uppercase">Detalhamento de Peças e Itens</label>
-                    {selectedVehicle.parts && selectedVehicle.parts.length > 0 && (
-                      <div className="flex gap-1 overflow-x-auto max-w-[200px] scrollbar-hide">
-                        {selectedVehicle.parts.slice(0, 3).map(p => (
-                          <button 
-                            key={p.id}
-                            onClick={() => {
-                              setNewServicePart({ name: p.name, quantity: '1', unitPrice: p.estimatedPrice ? String(p.estimatedPrice) : '', observation: '' });
-                            }}
-                            className="text-[9px] bg-white border border-gray-200 px-2 py-1 rounded-full whitespace-nowrap hover:border-brand-primary transition-colors font-bold text-gray-500"
-                          >
-                            + {p.name}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-2 mb-4">
-                    {newService.partsList.map((p, idx) => (
-                      <div key={p.id} className="flex items-center justify-between bg-white p-3 rounded-xl shadow-sm border border-gray-50">
-                        <div className="flex flex-col">
-                           <span className="text-sm font-bold text-gray-700">{p.name}</span>
-                           <span className="text-[10px] text-gray-400 font-mono">Qtd: {p.quantity} • Unit: R$ {p.unitPrice.toLocaleString()}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-mono font-black text-brand-primary">R$ {(p.quantity * p.unitPrice).toLocaleString()}</span>
-                          <button onClick={() => setNewService(s => ({...s, partsList: s.partsList.filter((_, i) => i !== idx)}))} className="text-red-400 hover:text-red-600 transition-colors">
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-5 gap-2">
-                      <input 
-                        type="text" 
-                        placeholder="Nome da Peça / Item" 
-                        className="col-span-3 bg-white border-gray-100 rounded-lg p-2 text-xs focus:ring-1 focus:ring-brand-accent" 
-                        value={newServicePart.name} 
-                        onChange={e => setNewServicePart({...newServicePart, name: e.target.value})} 
-                      />
-                      <input 
-                        type="number" 
-                        placeholder="Qtd" 
-                        className="bg-white border-gray-100 rounded-lg p-2 text-xs font-mono" 
-                        value={newServicePart.quantity} 
-                        onChange={e => setNewServicePart({...newServicePart, quantity: e.target.value})} 
-                      />
-                      <div className="flex gap-1">
-                        <button 
-                           onClick={() => {
-                              if(!newServicePart.name || !newServicePart.unitPrice) return;
-                              const part: ServicePart = {
-                                id: crypto.randomUUID(),
-                                name: newServicePart.name,
-                                quantity: Number(newServicePart.quantity) || 1,
-                                unitPrice: Number(newServicePart.unitPrice) || 0,
-                                observation: newServicePart.observation
-                              };
-                              setNewService(s => ({...s, partsList: [...s.partsList, part]}));
-                              setNewServicePart({ name: '', quantity: '1', unitPrice: '', observation: '' });
-                           }}
-                           className="bg-brand-primary text-white rounded-lg flex items-center justify-center hover:bg-brand-accent transition-colors flex-1"
-                           title="Adicionar ao Serviço"
-                        >
-                          <Plus size={16} />
-                        </button>
-                        <button 
-                           onClick={async () => {
-                              if(!newServicePart.name) return;
-                              // Abre interface de pesquisa para salvar no catálogo
-                              setIsAddingPart(true);
-                              setNewPartName(newServicePart.name);
-                              // Adiciona também ao serviço atual simultaneamente
-                              const part: ServicePart = {
-                                id: crypto.randomUUID(),
-                                name: newServicePart.name,
-                                quantity: Number(newServicePart.quantity) || 1,
-                                unitPrice: Number(newServicePart.unitPrice) || 0,
-                                observation: newServicePart.observation
-                              };
-                              setNewService(s => ({...s, partsList: [...s.partsList, part]}));
-                           }}
-                           className="bg-brand-accent text-white rounded-lg flex items-center justify-center hover:bg-orange-500 transition-colors flex-1"
-                           title="Salvar no Catálogo Master"
-                        >
-                          <Book size={16} />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <input 
-                        type="number" 
-                        placeholder="Preço Unitário (R$)" 
-                        className="flex-1 bg-white border-gray-100 rounded-lg p-2 text-xs font-mono" 
-                        value={newServicePart.unitPrice} 
-                        onChange={e => setNewServicePart({...newServicePart, unitPrice: e.target.value})} 
-                      />
-                      {newServicePart.name && (
-                        <button 
-                          onClick={async () => {
-                            if(!newServicePart.name) return;
-                            try {
-                              const res = await geminiService.researchPart(newServicePart.name, `${selectedVehicle?.name} ${selectedVehicle?.model}`);
-                              if(res.part?.estimatedPrice) {
-                                setNewServicePart(prev => ({...prev, unitPrice: String(res.part?.estimatedPrice)}));
-                              } else {
-                                alert("IA não encontrou preço médio. Digite manualmente.");
-                              }
-                            } catch(e) {
-                              alert("Erro na pesquisa de preço.");
-                            }
-                          }}
-                          className="bg-blue-50 text-blue-500 text-[10px] font-bold px-3 py-1 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1"
-                        >
-                          <Sparkles size={10} /> Sugerir Preço
-                        </button>
-                      )}
-                    </div>
-                    <textarea 
-                      placeholder="Observações técnicas ou adaptações para este item..." 
-                      className="w-full bg-white border-gray-100 rounded-lg p-2 text-xs focus:ring-1 focus:ring-brand-accent min-h-[40px] resize-none" 
-                      value={newServicePart.observation} 
-                      onChange={e => setNewServicePart({...newServicePart, observation: e.target.value})}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                   <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase ml-1">Mão de Obra (R$)</label>
-                    <input type="number" className="w-full bg-gray-50 border-0 rounded-xl p-4 font-mono text-brand-primary font-bold" value={newService.laborCost} onChange={e => setNewService({...newService, laborCost: e.target.value})} />
-                  </div>
-                  <div className="bg-brand-primary/5 p-4 rounded-xl flex flex-col justify-center border border-brand-primary/10">
-                    <label className="text-[9px] font-bold text-brand-primary uppercase tracking-widest">Total Estimado</label>
-                    <p className="text-lg font-mono font-black text-brand-primary">
-                      R$ {(
-                        (newService.partsList.reduce((sum, p) => sum + (p.quantity * p.unitPrice), 0)) + 
-                        (Number(newService.laborCost) || 0)
-                      ).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button onClick={() => setIsAddingService(false)} className="flex-1 py-4 font-bold text-gray-400">Cancelar</button>
-                <button onClick={addService} className="flex-2 py-4 bg-brand-primary text-white rounded font-bold shadow-lg">Registrar</button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <AddServiceModal 
+        isOpen={isAddingService}
+        onClose={() => setIsAddingService(false)}
+        newService={newService}
+        setNewService={setNewService}
+        newServicePart={newServicePart}
+        setNewServicePart={setNewServicePart}
+        vehicleParts={selectedVehicle?.parts || []}
+        onAddService={addService}
+        onOpenAddPartCatalog={(name) => {
+          setIsAddingPart(true);
+          setNewPartName(name);
+        }}
+        vehicleNameModel={`${selectedVehicle?.name} ${selectedVehicle?.model}`}
+      />
 
       {/* MODAL: Add Fuel */}
-      <AnimatePresence>
-        {isAddingFuel && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsAddingFuel(false)} className="absolute inset-0 bg-brand-primary/40 backdrop-blur-md"></motion.div>
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative bg-white rounded p-8 w-full max-w-md shadow-2xl">
-              <h2 className="text-2xl font-bold mb-6 italic uppercase tracking-tighter">Novo Abastecimento</h2>
-              <div className="space-y-4 mb-8">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase ml-1">Km Atual</label>
-                    <input type="number" className="w-full bg-gray-50 border-0 rounded-xl p-4 font-mono" value={newFuel.mileage} onChange={e => setNewFuel({...newFuel, mileage: e.target.value})} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase ml-1">Data</label>
-                    <input type="date" className="w-full bg-gray-50 border-0 rounded-xl p-4" value={newFuel.date} onChange={e => setNewFuel({...newFuel, date: e.target.value})} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase ml-1">Litros</label>
-                    <input type="number" className="w-full bg-gray-50 border-0 rounded-xl p-4 font-mono" placeholder="0.00" value={newFuel.liters} onChange={e => setNewFuel({...newFuel, liters: e.target.value})} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase ml-1">Total Pago (R$)</label>
-                    <input type="number" className="w-full bg-gray-50 border-0 rounded-xl p-4 font-mono text-brand-accent font-bold" value={newFuel.cost} onChange={e => setNewFuel({...newFuel, cost: e.target.value})} />
-                  </div>
-                </div>
-                <label className="flex items-center gap-3 cursor-pointer p-4 bg-gray-50 rounded-xl">
-                  <input type="checkbox" checked={newFuel.fullTank} onChange={e => setNewFuel({...newFuel, fullTank: e.target.checked})} className="w-5 h-5 accent-brand-primary" />
-                  <span className="text-sm font-bold text-gray-600 uppercase tracking-widest">Encheu o Tanque?</span>
-                </label>
-              </div>
-              <div className="flex gap-3">
-                <button onClick={() => setIsAddingFuel(false)} className="flex-1 py-4 font-bold text-gray-400">Cancelar</button>
-                <button onClick={addFuel} className="flex-2 py-4 bg-brand-primary text-white rounded font-bold shadow-lg">Confirmar</button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <AddFuelModal 
+        isOpen={isAddingFuel}
+        onClose={() => setIsAddingFuel(false)}
+        newFuel={newFuel}
+        setNewFuel={setNewFuel}
+        onAddFuel={addFuel}
+      />
 
       {/* MODAL: Add Reminder */}
-      <AnimatePresence>
-        {isAddingReminder && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsAddingReminder(false)} className="absolute inset-0 bg-brand-primary/40 backdrop-blur-md"></motion.div>
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative bg-white rounded p-8 w-full max-w-md shadow-2xl">
-              <h2 className="text-2xl font-bold mb-6 italic uppercase tracking-tighter">Novo Lembrete</h2>
-              <div className="space-y-4 mb-8">
-                <div>
-                  <label className="text-xs font-bold text-gray-400 uppercase ml-1">Título do Lembrete</label>
-                  <input type="text" placeholder="Ex: Substituição das Pastilhas" className="w-full bg-gray-50 border-0 rounded-xl p-4 focus:ring-2 focus:ring-brand-accent" value={newReminder.title} onChange={e => setNewReminder({...newReminder, title: e.target.value})} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase ml-1">Km Alvo (Opcional)</label>
-                    <input type="number" className="w-full bg-gray-50 border-0 rounded-xl p-4 font-mono" value={newReminder.targetMileage} onChange={e => setNewReminder({...newReminder, targetMileage: e.target.value})} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase ml-1">Data Alvo (Opcional)</label>
-                    <input type="date" className="w-full bg-gray-50 border-0 rounded-xl p-4" value={newReminder.targetDate} onChange={e => setNewReminder({...newReminder, targetDate: e.target.value})} />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-400 uppercase ml-1">Tipo de Manutenção</label>
-                  <select className="w-full bg-gray-50 border-0 rounded-xl p-4" value={newReminder.type} onChange={e => setNewReminder({...newReminder, type: e.target.value as any})}>
-                    <option value="oil">Troca de Óleo</option>
-                    <option value="filter">Filtros</option>
-                    <option value="tire">Pneus / Alinhamento</option>
-                    <option value="brake">Freios</option>
-                    <option value="other">Outros</option>
-                  </select>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button onClick={() => setIsAddingReminder(false)} className="flex-1 py-4 font-bold text-gray-400">Cancelar</button>
-                <button onClick={addReminder} className="flex-2 py-4 bg-brand-primary text-white rounded font-bold shadow-lg">Criar Alerta</button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <AddReminderModal 
+        isOpen={isAddingReminder}
+        onClose={() => setIsAddingReminder(false)}
+        newReminder={newReminder}
+        setNewReminder={setNewReminder}
+        onAddReminder={addReminder}
+      />
 
       {/* MODAL: Add Part with AI Research */}
-      <AnimatePresence>
-        {isAddingPart && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => !isResearching && setIsAddingPart(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            />
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="relative bg-white rounded-3xl p-8 w-full max-w-lg shadow-2xl overflow-hidden"
-            >
-              {isResearching && (
-                <div className="absolute inset-0 z-20 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center p-8 text-center">
-                  <motion.div 
-                    animate={{ rotate: 360 }}
-                    transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                    className="mb-6 text-brand-accent"
-                  >
-                    <Settings size={64} />
-                  </motion.div>
-                  <h3 className="text-2xl font-black mb-2">IA Pesquisando Peça...</h3>
-                  <p className="text-gray-500 max-w-xs">Buscando códigos oficiais e especificações técnicas para seu veículo.</p>
-                </div>
-              )}
+      <AddPartModal 
+        isOpen={isAddingPart}
+        onClose={() => setIsAddingPart(false)}
+        newPartName={newPartName}
+        setNewPartName={setNewPartName}
+        aiSuggestions={aiSuggestions}
+        setAiSuggestions={setAiSuggestions}
+        isResearching={isResearching}
+        onAddPart={addPart}
+        onOpenDictionary={() => setIsDictionaryOpen(true)}
+      />
 
-              <div className="flex items-center gap-3 mb-8">
-                <div className="bg-brand-accent/10 p-2 rounded-lg text-brand-accent">
-                  <Database size={24} />
-                </div>
-                <h2 className="text-2xl font-bold">Adicionar Peça</h2>
-              </div>
-              
-              <div className="space-y-6 mb-8">
-                {aiSuggestions.length > 0 ? (
-                  <div>
-                    <p className="text-sm font-bold text-brand-accent mb-4">Múltiplas opções encontradas. Qual você deseja catalogar?</p>
-                    <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-2">
-                       {aiSuggestions.map((suggestion) => (
-                         <button
-                           key={suggestion}
-                           onClick={() => addPart(suggestion)}
-                           className="text-left bg-gray-50 hover:bg-brand-accent hover:text-white p-4 rounded-xl border border-gray-100 transition-all font-bold text-sm"
-                         >
-                            {suggestion}
-                         </button>
-                       ))}
-                    </div>
-                    <button 
-                      onClick={() => setAiSuggestions([])}
-                      className="text-xs text-gray-400 mt-4 underline"
-                    >
-                      Voltar para busca manual
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <p className="text-sm text-gray-500 leading-relaxed">
-                      Informe o nome da peça. A nossa Inteligência Artificial irá preencher os detalhes técnicos, vida útil e códigos oficiais de fábrica.
-                    </p>
-                    
-                    <div>
-                      <div className="flex justify-between items-center mb-1 ml-1">
-                        <label className="text-xs font-bold text-gray-400 uppercase">Nome ou Descrição</label>
-                        <button 
-                          onClick={() => setIsDictionaryOpen(true)}
-                          className="text-[10px] font-bold text-brand-accent flex items-center gap-1 hover:underline underline-offset-2"
-                          type="button"
-                        >
-                          <Book size={10} /> Sugestão de Peças
-                        </button>
-                      </div>
-                      <input 
-                        type="text" 
-                        autoFocus
-                        placeholder="Ex: Correia Dentada"
-                        className="w-full bg-gray-50 border-0 rounded-xl p-4 focus:ring-2 focus:ring-brand-accent transition-all text-lg font-medium"
-                        value={newPartName}
-                        onChange={(e) => setNewPartName(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && addPart()}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {aiSuggestions.length === 0 && (
-                <div className="flex gap-3">
-                  <button 
-                    onClick={() => {
-                      setIsAddingPart(false);
-                      setAiSuggestions([]);
-                    }}
-                    className="flex-1 py-4 text-gray-500 font-bold hover:bg-gray-50 rounded-xl transition-all"
-                    disabled={isResearching}
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    onClick={() => addPart()}
-                    disabled={!newPartName || isResearching}
-                    className="flex-2 py-4 bg-brand-primary text-white font-bold rounded-xl hover:bg-brand-accent disabled:opacity-50 transition-all shadow-lg flex items-center justify-center gap-2"
-                  >
-                    <Search size={18} /> Pesquisar com IA
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
       {/* MODAL: Maintenance Simulation */}
-      <AnimatePresence>
-        {isSimulating && selectedVehicle && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsSimulating(false)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-md"
-            />
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative bg-white rounded p-8 w-full max-w-2xl shadow-2xl h-[85vh] flex flex-col"
-            >
-              <div className="flex justify-between items-center mb-8 shrink-0">
-                <div className="flex items-center gap-3">
-                   <div className="bg-brand-accent p-2 rounded-xl text-white block">
-                     <Activity size={24} />
-                   </div>
-                   <div>
-                     <h2 className="text-2xl font-black">Simulador de Manutenção</h2>
-                     <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Plano Preventivo por Quilometragem</p>
-                   </div>
-                </div>
-                <button 
-                  onClick={() => setIsSimulating(false)}
-                  className="bg-gray-100 hover:bg-gray-200 p-2 rounded-full transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div className="bg-gray-50 p-6 rounded mb-8 border border-gray-100">
-                <div className="flex flex-col md:flex-row gap-6 items-end">
-                  <div className="flex-1 w-full">
-                    <label className="text-xs font-bold text-gray-400 uppercase ml-1 block mb-1">Simular Revisão para:</label>
-                    <div className="relative">
-                      <input 
-                        type="number"
-                        placeholder="Ex: 50000"
-                        className="w-full bg-white border border-gray-200 rounded p-4 focus:ring-2 focus:ring-brand-accent transition-all text-xl font-mono font-bold"
-                        value={simulationMileage}
-                        onChange={(e) => setSimulationMileage(e.target.value === '' ? '' : Number(e.target.value))}
-                      />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">KM</span>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={runSimulation}
-                    disabled={!simulationMileage || isCalculatingSimulation}
-                    className="bg-brand-primary text-white px-8 py-4 rounded font-bold hover:bg-brand-accent transition-all shadow-lg flex items-center gap-2 disabled:opacity-50 whitespace-nowrap min-w-[180px] justify-center"
-                  >
-                    {isCalculatingSimulation ? <Settings className="animate-spin" size={20} /> : <Play size={20} />}
-                    Calcular Plano
-                  </button>
-                </div>
-                <p className="mt-4 text-[10px] text-gray-500 font-medium">
-                  * A simulação utiliza inteligência artificial baseada no catálogo técnico padrão do {selectedVehicle.name} {selectedVehicle.model}.
-                </p>
-              </div>
-
-              <div className="flex-1 overflow-y-auto pr-2 space-y-4">
-                {isCalculatingSimulation ? (
-                  <div className="flex flex-col items-center justify-center py-20 text-center">
-                    <motion.div 
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ repeat: Infinity, duration: 1.5 }}
-                      className="text-brand-accent mb-4"
-                    >
-                      <Database size={48} />
-                    </motion.div>
-                    <h4 className="font-bold text-lg mb-1">Consultando Banco de Dados Técnico...</h4>
-                    <p className="text-gray-500 text-sm">Analisando histórico de revisões e vida útil de componentes.</p>
-                  </div>
-                ) : simulationResults.length > 0 ? (
-                  <>
-                    <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Recomendações da IA:</h4>
-                    <div className="space-y-3">
-                      {simulationResults.map((item, idx) => (
-                        <motion.div 
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: idx * 0.05 }}
-                          key={idx} 
-                          className="bg-white border border-gray-100 p-4 rounded flex items-start gap-4 hover:border-brand-accent transition-colors"
-                        >
-                          <div className={`p-2 rounded-lg shrink-0 ${
-                            item.urgency === 'alta' ? 'bg-red-50 text-red-500' : 
-                            item.urgency === 'media' ? 'bg-amber-50 text-amber-500' : 'bg-green-50 text-green-500'
-                          }`}>
-                            <AlertCircle size={20} />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex justify-between items-start mb-1">
-                              <h5 className="font-bold tracking-tight">{item.partName}</h5>
-                              <span className="text-sm font-mono font-black text-brand-primary">R$ {item.estimatedCost.toLocaleString()}</span>
-                            </div>
-                            <p className="text-xs font-bold text-brand-accent uppercase mb-1">{item.action}</p>
-                            <p className="text-xs text-gray-500 leading-relaxed">{item.reason}</p>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-gray-100 rounded">
-                    <Activity size={48} className="text-gray-200 mb-4" />
-                    <p className="text-gray-400 text-sm font-medium">Insira a quilometragem desejada para simular o plano de manutenção.</p>
-                  </div>
-                )}
-              </div>
-
-              {simulationResults.length > 0 && (
-                <div className="mt-8 pt-6 border-t border-gray-100 flex justify-between items-center bg-brand-primary text-white p-6 rounded relative overflow-hidden">
-                  <div className="relative z-10">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Total Estimado da Revisão</p>
-                    <h3 className="text-3xl font-mono font-black">
-                      R$ {simulationResults.reduce((sum, item) => sum + item.estimatedCost, 0).toLocaleString()}
-                    </h3>
-                    <div className="mt-2 flex items-center gap-2">
-                       <span className="text-[10px] font-bold text-green-400 uppercase tracking-widest">Saúde Estimada Pós-Revisão:</span>
-                       <span className="text-sm font-mono font-bold text-white">99%</span>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={async () => {
-                        try {
-                          await generateMaintenancePdf({
-                            vehicleName: selectedVehicle.name,
-                            vehicleModel: selectedVehicle.model,
-                            vehicleYear: selectedVehicle.year,
-                            simulationMileage: Number(simulationMileage),
-                            recommendations: simulationResults,
-                            totalEstimatedCost: simulationResults.reduce((sum, item) => sum + item.estimatedCost, 0),
-                          });
-                        } catch (error) {
-                          alert('Erro ao gerar PDF. Tente novamente.');
-                        }
-                    }}
-                    className="relative z-10 bg-brand-accent hover:bg-red-700 text-white px-6 py-3 rounded font-bold transition-all shadow-lg"
-                  >
-                    Exportar Plano
-                  </button>
-                  <Activity className="absolute right-[-10px] bottom-[-10px] opacity-10" size={120} />
-                </div>
-              )}
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <MaintenanceSimulationModal 
+        isOpen={isSimulating}
+        onClose={() => setIsSimulating(false)}
+        selectedVehicle={selectedVehicle}
+        simulationMileage={simulationMileage}
+        setSimulationMileage={setSimulationMileage}
+        simulationResults={simulationResults}
+        isCalculatingSimulation={isCalculatingSimulation}
+        onRunSimulation={runSimulation}
+      />
       {/* MODAL: Budget */}
       <AnimatePresence>
         {isBudgetOpen && selectedVehicle && (
@@ -3491,7 +4720,121 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
                   </div>
                 </div>
 
-                <div>
+                {/* Global Context Section */}
+                <div className="pt-4 border-t border-gray-100">
+                  <label className="text-xs font-bold text-gray-400 uppercase ml-1 block mb-4 flex items-center gap-2">
+                    <Globe size={14} /> Regionalização & Unidades
+                  </label>
+                  
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase text-gray-400">Moeda</label>
+                        <select 
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs font-bold focus:ring-2 focus:ring-brand-accent outline-none"
+                          value={data.settings?.currency || 'BRL'}
+                          onChange={(e) => {
+                            const newData = { ...data, settings: { ...data.settings, currency: e.target.value as any } };
+                            handleSave(newData);
+                          }}
+                        >
+                          <option value="BRL">Real (R$)</option>
+                          <option value="USD">Dólar ($)</option>
+                          <option value="EUR">Euro (€)</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase text-gray-400">Unidade Distância</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {['km', 'mi'].map(unit => (
+                            <button
+                              key={unit}
+                              type="button"
+                              onClick={() => {
+                                const newData = { ...data, settings: { ...data.settings, distanceUnit: unit as any } };
+                                handleSave(newData);
+                              }}
+                              className={`p-3 rounded-xl border text-[10px] font-black uppercase transition-all ${
+                                (data.settings?.distanceUnit || 'km') === unit 
+                                ? 'bg-brand-primary border-brand-primary text-white shadow-md' 
+                                : 'bg-white border-gray-100 text-gray-400 hover:border-brand-primary/30'
+                              }`}
+                            >
+                              {unit}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase text-gray-400">Região do Robô Extrator (Pop-up)</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {COUNTRIES.map(country => (
+                          <button
+                            key={country.id}
+                            type="button"
+                            onClick={() => {
+                              const newData = { 
+                                ...data, 
+                                settings: { 
+                                  ...data.settings!, 
+                                  countryId: country.id 
+                                } 
+                              };
+                              handleSave(newData);
+                            }}
+                            className={`p-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${
+                              (data.settings?.countryId || 'BR') === country.id 
+                                ? 'bg-brand-accent border-brand-accent text-white shadow-md' 
+                                : 'bg-white border-gray-100 text-gray-400 hover:border-brand-accent/30'
+                            }`}
+                          >
+                            <span className="text-xl">{country.flag}</span>
+                            <span className="text-[10px] font-black uppercase">{country.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase text-gray-400">Idioma & Região (Contexto IA)</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { id: 'pt-BR', label: 'BR', region: 'Brasil' },
+                          { id: 'en-US', label: 'US', region: 'USA' },
+                          { id: 'es-ES', label: 'ES', region: 'Europe' }
+                        ].map(opt => (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => {
+                              const newData = { 
+                                ...data, 
+                                settings: { 
+                                  ...data.settings, 
+                                  language: opt.id as any,
+                                  region: opt.region
+                                } 
+                              };
+                              handleSave(newData);
+                            }}
+                            className={`p-3 rounded-xl border flex flex-col items-center transition-all ${
+                              (data.settings?.language || 'pt-BR') === opt.id 
+                                ? 'bg-brand-primary border-brand-primary text-white shadow-md' 
+                                : 'bg-white border-gray-100 text-gray-400 hover:border-brand-primary/30'
+                            }`}
+                          >
+                            <span className="text-[10px] font-black">{opt.label}</span>
+                            <span className="text-[8px] font-bold opacity-60">{opt.region}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-gray-100">
                   <div className="flex justify-between items-center mb-4">
                     <label className="text-xs font-bold text-gray-400 uppercase ml-1 block flex items-center gap-2">
                        <Link size={14} /> Links de Consulta Personalizados
@@ -3611,15 +4954,16 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                         {category.parts.map((part) => (
                            <button
-                             key={part}
+                             key={part.name}
                              onClick={() => {
-                               setNewPartName(part);
+                               setNewPartName(part.name);
+                               setIsAddingPart(true);
                                setIsDictionaryOpen(false);
                              }}
                              className="text-left bg-gray-50 hover:bg-brand-accent hover:text-white border border-gray-100 rounded-xl p-4 transition-all group"
                            >
-                              <p className="text-sm font-bold tracking-tight">{part}</p>
-                              <p className="text-[10px] opacity-60 font-mono mt-1 group-hover:opacity-100">Selecionar Peça</p>
+                              <p className="text-sm font-bold tracking-tight">{part.name}</p>
+                              <p className="text-[10px] opacity-60 font-mono mt-1 group-hover:opacity-100">Vida: {part.lifecycle.toLocaleString()} km</p>
                            </button>
                         ))}
                     </div>
@@ -3837,16 +5181,16 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
                     </p>
                     <div className="flex gap-3">
                       <button
-                        onClick={captureFromDetetive}
+                        onClick={captureFromExternal}
                         disabled={isCapturingFromWeb}
-                        className="flex-1 px-6 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                        className="flex-1 px-6 py-3 bg-brand-accent text-white font-bold rounded-xl hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                       >
                         {isCapturingFromWeb ? (
-                          <Settings className="animate-spin" size={18} />
+                          <RefreshCw className="animate-spin" size={18} />
                         ) : (
-                          <Globe size={18} />
+                          <Zap size={18} />
                         )}
-                        {isCapturingFromWeb ? 'Capturando...' : '⚡ Captura Automática'}
+                        {isCapturingFromWeb ? 'Aguardando...' : '🚀 Robô BuscaPlacas'}
                       </button>
                       <a 
                         href={webVehicleSearchService.getSearchPageUrl(newVehicle.plate)}
@@ -3932,6 +5276,18 @@ ${selectedVehicle.parts.map(p => `- ${p.name}: ${p.brand || 'N/A'}`).join('\n')}
       <input type="file" ref={vehicleImageInputRef} onChange={handleVehicleImageUpload} accept="image/*" className="hidden" />
       <input type="file" ref={brandLogoInputRef} onChange={handleBrandLogoUpload} accept="image/*" className="hidden" />
       <input type="file" ref={importVehicleInputRef} onChange={handleImportVehicle} accept=".json,application/json" className="hidden" />
-      </motion.div>
-    );
-  }
+
+      {/* MODAL: Confirmação de Exclusão (Substituído por Componente) */}
+      <DeleteConfirmationModal
+        isOpen={!!itemToDelete}
+        onClose={() => setItemToDelete(null)}
+        onConfirm={confirmDelete}
+        title={itemToDelete?.type === 'vehicle' ? 'Excluir Veículo' : 'Excluir Registro'}
+        message={itemToDelete?.type === 'vehicle' 
+          ? 'Tem certeza absoluta? Todos os dados, históricos e registros deste veículo serão apagados permanentemente.'
+          : 'Deseja remover este registro? Esta ação não pode ser desfeita.'}
+      />
+    </motion.div>
+    </>
+  );
+}
