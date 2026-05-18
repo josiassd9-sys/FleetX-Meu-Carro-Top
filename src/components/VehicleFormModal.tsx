@@ -70,6 +70,8 @@ interface VehicleFormModalProps {
   vehicleImageInputRef: React.RefObject<HTMLInputElement | null>;
   brandLogoInputRef: React.RefObject<HTMLInputElement | null>;
   pasteTextAreaRef: React.RefObject<HTMLTextAreaElement | null>;
+  identifierLabel?: string;
+  identifierPlaceholder?: string;
 }
 
 export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
@@ -105,7 +107,9 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
   isSearchingLogo,
   vehicleImageInputRef,
   brandLogoInputRef,
-  pasteTextAreaRef
+  pasteTextAreaRef,
+  identifierLabel = 'Placa',
+  identifierPlaceholder = 'AAA-0000'
 }) => {
   return (
     <AnimatePresence>
@@ -217,7 +221,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
                           className="w-full bg-brand-accent text-brand-primary py-5 rounded-[1.25rem] font-black text-xs uppercase tracking-[1px] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_10px_25px_rgba(251,255,0,0.3)] flex items-center justify-center gap-3 mb-6"
                         >
                           {isSearchingPlate ? <RefreshCw className="animate-spin" size={18} /> : <Zap size={18} fill="currentColor" />}
-                          {isSearchingPlate ? 'Buscando na Web...' : 'Sincronizar Placa'}
+                          {isSearchingPlate ? 'Buscando na Web...' : `Sincronizar ${identifierLabel}`}
                         </button>
 
                         <div className="space-y-4">
@@ -455,14 +459,14 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
                 </div>
 
                 <div className="space-y-5">
-                  {/* === BUSCA POR PLACA === */}
+                  {/* === BUSCA POR IDENTIFICADOR === */}
                   <div>
-                    <label className="text-xs font-bold text-gray-400 uppercase ml-1 block mb-1">Placa</label>
+                    <label className="text-xs font-bold text-gray-400 uppercase ml-1 block mb-1">{identifierLabel}</label>
                     <div className="flex gap-2 sm:gap-3 relative">
                       <input
                         type="text"
-                        placeholder={currentCountry.platePlaceholder}
-                        maxLength={10}
+                        placeholder={identifierPlaceholder}
+                        maxLength={20}
                         className={`w-32 sm:flex-1 bg-gray-50 border-0 rounded-2xl p-3 sm:p-4 font-mono uppercase tracking-[2px] sm:tracking-[3px] text-lg sm:text-xl font-bold focus:ring-2 focus:ring-brand-accent transition-all ${isSearchingPlate ? 'ring-2 ring-brand-accent shadow-[0_0_20px_rgba(225,29,72,0.4)] animate-pulse' : ''}`}
                         value={newVehicle.plate || ''}
                         onChange={(e) => setNewVehicle(prev => ({

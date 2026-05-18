@@ -71,6 +71,26 @@ export interface Reminder {
   type: 'oil' | 'filter' | 'tire' | 'brake' | 'other';
 }
 
+export interface TireSet {
+  id: string;
+  brand: string;
+  model: string;
+  size?: string;
+  installationDate: string;
+  installationMileage: number;
+  expectedLifeMileage: number;
+  notes?: string;
+  position: 'all' | 'front' | 'rear' | 'front-left' | 'front-right' | 'rear-left' | 'rear-right' | 'spare';
+  status: 'ok' | 'warning' | 'critical';
+  aiInsights?: {
+    characteristics: string[];
+    benefits: string[];
+    dangers: string[];
+    estimatedDurability: string;
+    score: number;
+  };
+}
+
 export interface Vehicle {
   id: string;
   createdAt: string; // Data da criação do primeiro registro do veículo
@@ -93,6 +113,7 @@ export interface Vehicle {
   services: ServiceEntry[];
   fuelLogs: FuelLog[];
   reminders: Reminder[];
+  tireSets?: TireSet[];
   usageProfile?: 'urban' | 'highway' | 'mixed';
   avgDailyKm?: number;
   drivingStyle?: 'smooth' | 'moderate' | 'aggressive';
@@ -138,6 +159,24 @@ export interface VehicleSearchLink {
   color: string;
 }
 
+export interface CountryConfig {
+  id: string;
+  name: string;
+  flag: string;
+  plateFormat: RegExp;
+  platePlaceholder: string;
+  searchPortalUrl: string;
+  technicalTerms: {
+    brand: string[];
+    model: string[];
+    year: string[];
+    color: string[];
+    engine: string[];
+  };
+}
+
+export type Country = CountryConfig;
+
 export interface AppData {
   vehicles: Vehicle[];
   settings?: {
@@ -147,6 +186,8 @@ export interface AppData {
     plateApiHost?: string;
     appName?: string;
     agencyName?: string;
+    vehicleIdentifierLabel?: string; // Default: 'Placa'
+    vehicleIdentifierPlaceholder?: string; // Default: 'AAA-0000'
     theme?: 'default' | 'blue' | 'green' | 'dark' | 'orange';
     appIcon?: string;
     searchLinks?: VehicleSearchLink[];
@@ -157,5 +198,6 @@ export interface AppData {
     region: string;
     countryId?: string;
     marketReferenceName?: string;
+    showInternalBrowser?: boolean;
   };
 }

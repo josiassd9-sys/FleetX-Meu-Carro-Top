@@ -76,7 +76,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
           <Box size={14} className="text-brand-accent" />
           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mr-1">Peças</span>
           <span className="text-sm font-black text-brand-primary">
-            {data.vehicles.reduce((acc, v) => acc + (v.parts?.length || 0), 0)}
+            {(data.vehicles || []).reduce((acc, v) => acc + (v.parts?.length || 0), 0)}
           </span>
         </div>
 
@@ -95,7 +95,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         }}
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2"
       >
-        {data.vehicles.map((vehicle) => (
+        {(data.vehicles || []).map((vehicle) => (
           <motion.div
             key={vehicle.id}
             variants={{

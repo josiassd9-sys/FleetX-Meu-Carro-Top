@@ -977,6 +977,30 @@ export const geminiService = {
     }
   },
 
+  analyzeTireProfile: async (brand: string, model: string, currentUsageProfile: string): Promise<any> => {
+    try {
+      const prompt = `Analise o perfil técnico do pneu: "${brand} ${model}".
+        Considere que o perfil de uso do veículo é: ${currentUsageProfile}.
+        
+        Sua tarefa é encontrar as características reais deste modelo de pneu e correlacionar com o uso.
+        
+        Retorne APENAS um JSON estruturado com:
+        {
+          "characteristics": ["array de strings com características técnicas"],
+          "benefits": ["array de strings com pontos positivos"],
+          "dangers": ["array de strings com riscos ou pontos negativos"],
+          "estimatedDurability": "descrição da durabilidade esperada em km",
+          "score": um número de 0 a 100 representando a qualidade/custo-benefício
+        }`;
+
+      const payload = await geminiService.callAI(prompt, true, true);
+      return parseAIJson<any>(payload);
+    } catch (error) {
+      console.error("Tire Analysis Error:", error);
+      return null;
+    }
+  },
+
   getFuelInsight: async (avgConsumption: string, vehicle: any): Promise<string> => {
     try {
       const prompt = `Analise a economia de combustível:

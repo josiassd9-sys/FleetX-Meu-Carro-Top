@@ -52,17 +52,60 @@ import {
   Coins,
   BadgePercent,
   Eraser,
-  Bell
+  Bell,
+  CarFront,
+  BusFront,
+  Truck,
+  Bike,
+  Fuel,
+  Cog,
+  Cylinder,
+  Key,
+  Timer,
+  Trophy,
+  Flag,
+  Unplug,
+  Flame,
+  Wind,
+  Map,
+  HardHat
 } from 'lucide-react';
+
+import { 
+  CarFerrariTop, 
+  CarMuscleTop, 
+  CarSilhouette, 
+  SteeringWheelCustom 
+} from './CustomIcons';
 
 const ICON_OPTIONS = {
   Cpu,
   Car,
+  CarFront,
+  BusFront,
+  Truck,
+  Bike,
   Wrench,
   Shield,
   Zap,
   Activity,
-  Gauge
+  Gauge,
+  Fuel,
+  Cog,
+  Cylinder,
+  Key,
+  Timer,
+  Trophy,
+  Flag,
+  Unplug,
+  Flame,
+  Wind,
+  Map,
+  HardHat,
+  CarFerrariTop,
+  CarMuscleTop,
+  CarSilhouette,
+  SteeringWheelCustom
 };
 
 interface HeaderLogoProps {

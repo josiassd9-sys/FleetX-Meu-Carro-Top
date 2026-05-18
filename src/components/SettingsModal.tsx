@@ -165,6 +165,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                            onChange={(e) => updateSettings({ marketReferenceName: e.target.value })}
                          />
                        </div>
+
+                       <div className="grid grid-cols-2 gap-8">
+                          <div>
+                            <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-3 block">Rótulo do Identificador (Ex: Placa, Matrícula)</label>
+                            <input 
+                              type="text" 
+                              className="w-full bg-gray-50 border-gray-100 rounded-2xl p-4 font-bold"
+                              value={data.settings.vehicleIdentifierLabel || ''}
+                              onChange={(e) => updateSettings({ vehicleIdentifierLabel: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-3 block">Exemplo/Dica (Placeholder)</label>
+                            <input 
+                              type="text" 
+                              className="w-full bg-gray-50 border-gray-100 rounded-2xl p-4 font-bold"
+                              value={data.settings.vehicleIdentifierPlaceholder || ''}
+                              onChange={(e) => updateSettings({ vehicleIdentifierPlaceholder: e.target.value })}
+                            />
+                          </div>
+                       </div>
                     </div>
                   )}
 

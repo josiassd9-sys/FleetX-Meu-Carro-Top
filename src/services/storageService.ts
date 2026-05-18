@@ -7,12 +7,16 @@ export const storageService = {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const data = JSON.parse(saved);
+        return {
+          vehicles: Array.isArray(data?.vehicles) ? data.vehicles : [],
+          settings: data?.settings || {}
+        } as AppData;
       } catch (e) {
         console.error('Failed to parse storage data', e);
       }
     }
-    return { vehicles: [] };
+    return { vehicles: [], settings: {} as any };
   },
 
   saveData: (data: AppData) => {
