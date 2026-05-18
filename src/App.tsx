@@ -55,7 +55,7 @@ import { storageService } from './services/storageService';
 import { geminiService } from './services/geminiService';
 import { fileToBase64, resizeImage } from './lib/utils';
 import { getVehicleHealth, getMaintenanceScore, getFuelAnalytics as getFuelAnalyticsUtil } from './lib/vehicleUtils';
-import { THEMES } from './constants';
+import { THEMES, DEFAULT_SEARCH_LINKS } from './constants';
 
 export default function App() {
   const {
@@ -178,6 +178,7 @@ export default function App() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const vehicleImageInputRef = useRef<HTMLInputElement | null>(null);
   const brandLogoInputRef = useRef<HTMLInputElement | null>(null);
+  const pasteTextAreaRef = useRef<HTMLTextAreaElement | null>(null);
   const [newServicePart, setNewServicePart] = useState<any>({ name: '', quantity: 1, unitPrice: 0 });
 
   const {
@@ -663,10 +664,17 @@ export default function App() {
         searchImage={searchImage}
         isSearchingImage={isSearchingImage}
         handleCaptureFromClipboard={captureFromExternal}
+        captureFromExternal={captureFromExternal}
         robotLogs={robotLogs}
         robotLogsEndRef={robotLogsEndRef}
         plateSearchStatus={plateSearchStatus}
         currentCountry={currentCountry}
+        searchLinks={data.settings?.searchLinks || DEFAULT_SEARCH_LINKS}
+        searchLogo={(name) => searchLogo(name || newVehicle.name || '', false)}
+        isSearchingLogo={isSearchingLogo}
+        vehicleImageInputRef={vehicleImageInputRef}
+        brandLogoInputRef={brandLogoInputRef}
+        pasteTextAreaRef={pasteTextAreaRef}
       />
 
       <AddServiceModal
