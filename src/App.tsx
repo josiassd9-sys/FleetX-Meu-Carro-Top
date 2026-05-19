@@ -646,7 +646,7 @@ export default function App() {
         searchVehicleByPlate={searchVehicleByPlate}
         rawPastedData={rawPastedData}
         setRawPastedData={setRawPastedData}
-        handleAssistedProcess={handleAssistedProcess}
+        handleAssistedProcess={() => handleAssistedProcess()}
         isProcessingAssisted={isProcessingAssisted}
         handleRemoveBackground={onRemoveBackgroundWrapper}
         isRemovingBackground={isRemovingBackground}
