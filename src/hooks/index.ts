@@ -6,3 +6,4 @@ export * from './useRobotSearch';
 export * from './useVehicleManual';
 export * from './useVehicleActions';
 export * from './useVehicleItems';
+export * from './useFileHandlers';

@@ -16,6 +16,14 @@ interface IntelligenceTabProps {
   isAnalyzingTco: boolean;
   tcoAnalysis: string | null;
   createdAt: string;
+  fuelAnalytics?: {
+    data: any[];
+    avgKmL: number;
+    avgCostKm: number;
+    totalLiters: number;
+    totalCost: number;
+    distanceTraveled: number;
+  };
 }
 
 export const IntelligenceTab: React.FC<IntelligenceTabProps> = ({
@@ -28,14 +36,14 @@ export const IntelligenceTab: React.FC<IntelligenceTabProps> = ({
   runTCOAnalysis,
   isAnalyzingTco,
   tcoAnalysis,
-  createdAt
+  createdAt,
+  fuelAnalytics
 }) => {
-  const totalFuelCost = (vehicle.fuelLogs || []).reduce((acc, l) => acc + l.cost, 0);
+  const totalFuelCost = fuelAnalytics?.totalCost || (vehicle.fuelLogs || []).reduce((acc, l) => acc + l.cost, 0);
   const totalServiceCost = (vehicle.services || []).reduce((acc, l) => acc + l.cost, 0);
-  const startMileage = vehicle.fuelLogs?.[0]?.mileage || vehicle.mileage;
-  const currentMileage = vehicle.mileage;
-  const traveledKm = Math.max(1, currentMileage - startMileage);
-  const costPerKm = totalFuelCost / traveledKm;
+  
+  const costPerKm = fuelAnalytics?.avgCostKm || (totalFuelCost / Math.max(1, vehicle.mileage - (vehicle.fuelLogs?.[0]?.mileage || 0)));
+  const traveledKm = fuelAnalytics?.distanceTraveled || Math.max(1, vehicle.mileage - (vehicle.fuelLogs?.[0]?.mileage || vehicle.mileage));
   
   const createdDate = new Date(createdAt || new Date());
   const monthsActive = Math.max(1, (new Date().getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24 * 30));

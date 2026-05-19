@@ -55,5 +55,9 @@ export const storageService = {
       reader.onerror = () => reject(new Error('Failed to read file'));
       reader.readAsText(file);
     });
+  },
+  
+  clearData: () => {
+    localStorage.removeItem(STORAGE_KEY);
   }
 };

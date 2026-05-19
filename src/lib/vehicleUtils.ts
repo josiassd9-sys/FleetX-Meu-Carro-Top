@@ -32,7 +32,9 @@ export const getMaintenanceScore = (selectedVehicle: Vehicle | null): number => 
 };
 
 export const getFuelAnalytics = (selectedVehicle: Vehicle | null) => {
-  if (!selectedVehicle || !selectedVehicle.fuelLogs || selectedVehicle.fuelLogs.length < 2) return null;
+  if (!selectedVehicle || !selectedVehicle.fuelLogs || selectedVehicle.fuelLogs.length < 2) {
+    return { data: [], avgKmL: 0, avgCostKm: 0, totalLiters: 0, totalCost: 0, distanceTraveled: 0 };
+  }
   
   const logs = [...selectedVehicle.fuelLogs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const data = [];
@@ -55,8 +57,8 @@ export const getFuelAnalytics = (selectedVehicle: Vehicle | null) => {
     }
   }
 
-  const avgKmL = totalLiters > 0 ? (totalKm / totalLiters).toFixed(2) : '0';
-  const avgCostKm = totalKm > 0 ? (totalCost / totalKm).toFixed(2) : '0';
+  const avgKmL = totalLiters > 0 ? Number((totalKm / totalLiters).toFixed(2)) : 0;
+  const avgCostKm = totalKm > 0 ? Number((totalCost / totalKm).toFixed(2)) : 0;
 
-  return { data, avgKmL, avgCostKm };
+  return { data, avgKmL, avgCostKm, totalLiters, totalCost, distanceTraveled: totalKm };
 };

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Vehicle, AppData, ServiceEntry } from '../types';
 import { geminiService } from '../services/geminiService';
+import { getFuelAnalytics } from '../lib/vehicleUtils';
 
 export function useVehiclePredictions(selectedVehicle: Vehicle | null, data: AppData, handleSave: (data: AppData) => void) {
   const [maintenancePredictions, setMaintenancePredictions] = useState<{ item: string; daysLeft: number; estimatedDate: string; priority: string }[]>([]);
@@ -17,43 +18,13 @@ export function useVehiclePredictions(selectedVehicle: Vehicle | null, data: App
   const [isAnalyzingHealth, setIsAnalyzingHealth] = useState(false);
   const [symptomQuery, setSymptomQuery] = useState('');
 
-  const getFuelAnalytics = () => {
-    if (!selectedVehicle || !selectedVehicle.fuelLogs || selectedVehicle.fuelLogs.length < 2) return null;
-    
-    const logs = [...selectedVehicle.fuelLogs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    const analyticsData = [];
-    let totalKm = 0;
-    let totalLiters = 0;
-    let totalCost = 0;
-
-    for (let i = 1; i < logs.length; i++) {
-        const dist = logs[i].mileage - logs[i-1].mileage;
-        if (dist > 0 && logs[i].liters > 0) {
-            const consumption = dist / logs[i].liters;
-            analyticsData.push({
-                date: new Date(logs[i].date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-                kmL: Number(consumption.toFixed(2)),
-                costL: Number((logs[i].cost / logs[i].liters).toFixed(2))
-            });
-            totalKm += dist;
-            totalLiters += logs[i].liters;
-            totalCost += logs[i].cost;
-        }
-    }
-
-    const avgKmL = totalLiters > 0 ? (totalKm / totalLiters).toFixed(2) : 0;
-    const avgCostKm = totalKm > 0 ? (totalCost / totalKm).toFixed(2) : 0;
-
-    return { data: analyticsData, avgKmL, avgCostKm };
-  };
-
   const fetchPredictions = async (vehicle: Vehicle) => {
     setIsLoadingPredictions(true);
     try {
       const result = await geminiService.predictMaintenance(vehicle);
       setMaintenancePredictions(result.items);
       
-      const analytics = getFuelAnalytics();
+      const analytics = getFuelAnalytics(vehicle);
       if (analytics && analytics.data.length >= 1) {
         const insight = await geminiService.getFuelInsight(analytics.avgKmL.toString(), vehicle);
         setFuelInsight(insight);
@@ -124,7 +95,8 @@ export function useVehiclePredictions(selectedVehicle: Vehicle | null, data: App
     if (!selectedVehicle) return;
     setIsAnalyzingTco(true);
     try {
-      const totalFuel = selectedVehicle.fuelLogs?.reduce((acc, log) => acc + log.cost, 0) || 0;
+      const fuel = getFuelAnalytics(selectedVehicle);
+      const totalFuel = fuel.totalCost;
       const totalServices = selectedVehicle.services?.reduce((acc, s) => acc + s.cost, 0) || 0;
       const analysis = await geminiService.analyzeTCO(selectedVehicle, totalFuel, totalServices);
       setTcoAnalysis(analysis);
