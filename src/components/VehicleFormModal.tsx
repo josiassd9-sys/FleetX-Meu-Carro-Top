@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Vehicle, VehicleSearchLink } from '../types';
 import { BrandLogo } from './BrandLogo';
+import { RobotGalleryModal } from './RobotGalleryModal';
 
 interface VehicleImageProps {
   src?: string;
@@ -56,8 +57,15 @@ interface VehicleFormModalProps {
   isProcessingAssisted: boolean;
   handleRemoveBackground: () => void;
   isRemovingBackground: boolean;
-  searchImage: () => void;
+  searchImage: (customQuery?: string) => void;
   isSearchingImage: boolean;
+  foundPhotos: string[];
+  setFoundPhotos: (photos: string[]) => void;
+  searchQuery: string;
+  onSearch: (query: string) => void;
+  isGalleryOpen: boolean;
+  setIsGalleryOpen: (val: boolean) => void;
+  cooldownRemaining: number;
   handleCaptureFromClipboard: () => void;
   robotLogs: string[];
   robotLogsEndRef: React.RefObject<HTMLDivElement | null>;
@@ -96,6 +104,13 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
   isRemovingBackground,
   searchImage,
   isSearchingImage,
+  foundPhotos,
+  setFoundPhotos,
+  searchQuery,
+  onSearch,
+  isGalleryOpen,
+  setIsGalleryOpen,
+  cooldownRemaining,
   handleCaptureFromClipboard,
   robotLogs,
   robotLogsEndRef,
@@ -216,7 +231,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
                         </div>
 
                         <button
-                          onClick={searchVehicleByPlate}
+                          onClick={() => searchVehicleByPlate()}
                           disabled={isSearchingPlate}
                           className="w-full bg-brand-accent text-brand-primary py-5 rounded-[1.25rem] font-black text-xs uppercase tracking-[1px] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_10px_25px_rgba(251,255,0,0.3)] flex items-center justify-center gap-3 mb-6"
                         >
@@ -244,7 +259,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
                               <motion.button 
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                onClick={handleAssistedProcess}
+                                onClick={() => handleAssistedProcess()}
                                 disabled={isProcessingAssisted}
                                 className="w-full mt-3 py-3 bg-white text-brand-primary text-[10px] font-black rounded-xl hover:bg-brand-accent transition-all flex items-center justify-center gap-2 shadow-xl"
                               >
@@ -273,7 +288,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
                               />
                             </div>
                             <button
-                              onClick={handleRemoveBackground}
+                              onClick={() => handleRemoveBackground()}
                               disabled={isRemovingBackground}
                               className="absolute -right-2 -bottom-2 bg-brand-primary text-white p-2 rounded-xl shadow-lg hover:bg-brand-accent transition-all z-20 flex items-center gap-1.5"
                               title="Remover Fundo"
@@ -323,18 +338,18 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
                       </p>
 
                       {/* Robot Action: Find Image */}
-                      {!newVehicle.imageUrl && newVehicle.name && newVehicle.model && (
-                        <motion.button
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          onClick={searchImage}
-                          disabled={isSearchingImage}
-                          className="w-full mb-3 py-3 bg-blue-500/10 text-blue-600 rounded-xl font-black text-[9px] uppercase tracking-widest border border-blue-500/20 flex items-center justify-center gap-2 hover:bg-blue-500 hover:text-white transition-all group"
-                        >
-                          {isSearchingImage ? <RefreshCw size={14} className="animate-spin" /> : <Camera size={14} className="group-hover:rotate-12 transition-transform" />}
-                          BUSCAR FOTO DO MODELO
-                        </motion.button>
-                      )}
+                        {(newVehicle.name && newVehicle.model) && (
+                          <motion.button
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            onClick={() => searchImage()}
+                            disabled={isSearchingImage || cooldownRemaining > 0}
+                            className={`w-full mb-3 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest border flex items-center justify-center gap-2 transition-all group ${cooldownRemaining > 0 ? 'bg-orange-50 text-orange-400 border-orange-100 cursor-not-allowed' : 'bg-blue-50/10 text-blue-600 border-blue-500/20 hover:bg-blue-500 hover:text-white'}`}
+                          >
+                            {isSearchingImage ? <RefreshCw size={14} className="animate-spin" /> : (cooldownRemaining > 0 ? <RefreshCw size={14} /> : <Camera size={14} className="group-hover:rotate-12 transition-transform" />)}
+                            {cooldownRemaining > 0 ? `AGUARDE: ${cooldownRemaining}s (LIMITE IA)` : (foundPhotos.length > 0 ? 'REABRIR GALERIA DO ROBÔ' : 'BUSCAR FOTO DO MODELO')}
+                          </motion.button>
+                        )}
 
                       {/* Robot Manual Capture Helper */}
                       {plateSearchStatus.includes('Assistido') && (
@@ -344,7 +359,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
                           className="w-full mb-4 px-2"
                         >
                           <button 
-                            onClick={handleCaptureFromClipboard}
+                            onClick={() => handleCaptureFromClipboard()}
                             disabled={isProcessingAssisted}
                             className="w-full py-4 bg-brand-accent text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-brand-accent/30 flex flex-col items-center justify-center gap-1 hover:brightness-110 active:scale-95 transition-all"
                           >
@@ -378,8 +393,8 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
                                     className="text-[9px] font-mono"
                                   >
                                     <span className="text-brand-accent brightness-125 font-bold mr-2">root@mecanico:~$</span>
-                                    <span className={`${(log || '').includes('[SUCCESS]') ? 'text-green-400' : (log || '').includes('[ERROR]') ? 'text-red-400' : 'text-blue-400'}`}>
-                                      {log}
+                                    <span className={`${typeof log === 'string' && log.includes('[SUCCESS]') ? 'text-green-400' : typeof log === 'string' && log.includes('[ERROR]') ? 'text-red-400' : 'text-blue-400'}`}>
+                                      {typeof log === 'string' ? log : String(log)}
                                     </span>
                                   </motion.div>
                                 ))}
@@ -427,7 +442,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
                         transition={{ 
                           scale: plateSearchStatus.includes('Remover Fundo') ? { repeat: Infinity, duration: 1.5 } : { duration: 0.2 } 
                         }}
-                        onClick={handleRemoveBackground}
+                        onClick={() => handleRemoveBackground()}
                         className="absolute -right-3 -bottom-3 bg-white text-brand-primary p-3 rounded-2xl shadow-2xl border border-gray-100 hover:bg-brand-accent hover:text-white transition-all group/btn z-10"
                         title="Sincronizar com Robô Estúdio (Remover Fundo)"
                       >
@@ -445,16 +460,16 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
                   <motion.button 
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    onClick={searchImage}
-                    disabled={isSearchingImage}
-                    className="mt-4 px-6 py-3 bg-slate-900 text-white rounded-xl font-black text-[9px] uppercase tracking-widest border border-slate-700 flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-lg group w-full max-w-[340px]"
+                    onClick={foundPhotos.length > 0 ? () => setIsGalleryOpen(true) : () => searchImage()}
+                    disabled={isSearchingImage || (foundPhotos.length === 0 && cooldownRemaining > 0)}
+                    className={`mt-4 px-6 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest border flex items-center justify-center gap-3 transition-all shadow-lg group w-full max-w-[340px] ${cooldownRemaining > 0 && foundPhotos.length === 0 ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 'bg-slate-900 text-white border-slate-700 hover:bg-slate-800'}`}
                   >
                     {isSearchingImage ? (
                       <RefreshCw className="animate-spin text-blue-400" size={14} />
                     ) : (
-                      <Camera size={14} className="text-blue-400 group-hover:rotate-12 transition-transform" />
+                      cooldownRemaining > 0 && foundPhotos.length === 0 ? <RefreshCw size={14} className="animate-spin" /> : <Camera size={14} className="text-blue-400 group-hover:rotate-12 transition-transform" />
                     )}
-                    BUSCAR FOTO ORIGINAL (IA)
+                    {cooldownRemaining > 0 && foundPhotos.length === 0 ? `ESPERE ${cooldownRemaining}s (LIMITE IA)` : (foundPhotos.length > 0 ? 'REABRIR GALERIA DO ROBÔ' : (newVehicle.imageUrl ? 'TROCAR FOTO (IA)' : 'BUSCAR FOTO ORIGINAL (IA)'))}
                   </motion.button>
                 </div>
 
@@ -475,10 +490,10 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
                         }))}
                       />
                       <button
-                        onClick={searchVehicleByPlate}
-                        disabled={isSearchingPlate || !newVehicle.plate || newVehicle.plate.length < 4}
-                        className="flex-1 sm:flex-none px-4 sm:px-8 py-3 sm:py-4 bg-brand-primary text-white font-bold rounded-2xl hover:bg-brand-accent transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-brand-primary/20 text-sm sm:text-base overflow-hidden relative"
-                        title="Busca Inteligente via IA e Bases Públicas"
+                        onClick={() => searchVehicleByPlate()}
+                        disabled={isSearchingPlate || !newVehicle.plate || newVehicle.plate.length < 4 || cooldownRemaining > 0}
+                        className={`flex-1 sm:flex-none px-4 sm:px-8 py-3 sm:py-4 font-bold rounded-2xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg text-sm sm:text-base overflow-hidden relative ${cooldownRemaining > 0 ? 'bg-orange-500/10 text-orange-600 shadow-orange-500/10' : 'bg-brand-primary text-white hover:bg-brand-accent shadow-brand-primary/20'}`}
+                        title={cooldownRemaining > 0 ? `Aguarde ${cooldownRemaining}s para usar a IA novamente` : "Busca Inteligente via IA e Bases Públicas"}
                       >
                         {isSearchingPlate && (
                           <motion.div 
@@ -488,8 +503,8 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
                             transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
                           />
                         )}
-                        {isSearchingPlate ? <RefreshCw className="animate-spin" size={18} /> : <Sparkles size={18} />}
-                        <span className="truncate z-10">Identificar</span>
+                        {isSearchingPlate ? <RefreshCw className="animate-spin" size={18} /> : (cooldownRemaining > 0 ? <RefreshCw className="animate-spin" size={18} /> : <Sparkles size={18} />)}
+                        <span className="truncate z-10">{cooldownRemaining > 0 ? `${cooldownRemaining}s` : 'Identificar'}</span>
                       </button>
                     </div>
 
@@ -514,7 +529,9 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
                                   {robotLogs.map((log, i) => (
                                     <div key={i} className="flex gap-2">
                                        <span className="text-gray-600">#</span>
-                                       <span className={`${(log || '').includes('[SUCCESS]') ? 'text-green-500' : 'text-blue-400'} truncate`}>{log}</span>
+                                       <span className={`${typeof log === 'string' && log.includes('[SUCCESS]') ? 'text-green-500' : 'text-blue-400'} truncate`}>
+                                         {typeof log === 'string' ? log : String(log)}
+                                       </span>
                                     </div>
                                   ))}
                                </div>
@@ -539,7 +556,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
                         </a>
                       ))}
                       <button 
-                        onClick={captureFromExternal}
+                        onClick={() => captureFromExternal()}
                         className="text-[10px] bg-brand-accent/10 text-brand-accent px-2.5 py-1.5 rounded-lg font-black hover:bg-brand-accent/20 transition-all border border-brand-accent/10 flex items-center gap-1 shadow-sm"
                         title="Tenta capturar dados se o site de consulta estiver aberto"
                       >
@@ -577,7 +594,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
                         <motion.button 
                           initial={{ opacity: 0, y: 5 }}
                           animate={{ opacity: 1, y: 0 }}
-                          onClick={handleAssistedProcess}
+                          onClick={() => handleAssistedProcess()}
                           disabled={isProcessingAssisted}
                           className="w-full mt-2 py-2.5 bg-brand-primary text-white text-xs font-black rounded-xl hover:bg-brand-accent transition-all flex items-center justify-center gap-2 shadow-md shadow-brand-primary/20"
                         >
@@ -877,6 +894,21 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
               </button>
             </div>
           </motion.div>
+          
+          {/* New Integrated Browser Gallery */}
+          <RobotGalleryModal
+            isOpen={isGalleryOpen}
+            onClose={() => setIsGalleryOpen(false)}
+            photos={foundPhotos}
+            onSelect={(photo) => setNewVehicle(prev => ({ ...prev, imageUrl: photo }))}
+            selectedPhoto={newVehicle.imageUrl || null}
+            vehicleName={`${newVehicle.name || ''} ${newVehicle.model || ''} ${newVehicle.version || ''}`}
+            isSearching={isSearchingImage}
+            robotLogs={robotLogs}
+            searchQuery={searchQuery}
+            onSearch={searchImage}
+            cooldownRemaining={cooldownRemaining}
+          />
         </div>
       )}
     </AnimatePresence>

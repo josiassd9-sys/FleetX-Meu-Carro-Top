@@ -4,6 +4,7 @@ export * from './OnboardingModal';
 export * from './HeaderLogo';
 export * from './BrandLogo';
 export * from './VehicleImage';
+export * from './RobotGalleryModal';
 export * from './SettingsModal';
 export * from './VehicleFormModal';
 export * from './AddServiceModal';

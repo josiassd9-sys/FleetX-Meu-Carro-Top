@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Vehicle, AppData } from '../types';
 import { geminiService } from '../services/geminiService';
-import { createVehicleManual } from '../services/manual-extraction';
 
 export function useVehicleManual(
   selectedVehicle: Vehicle | null,
@@ -48,12 +47,18 @@ export function useVehicleManual(
     setIsUploadingPDF(true);
     try {
       const base64Data = await readFileAsBase64(file);
-      const manual = await createVehicleManual(
+      const vehicleModelStr = `${selectedVehicle.name} ${selectedVehicle.model} ${selectedVehicle.year}`;
+      
+      const manualData = await geminiService.extractVehicleManualFromPdf(
         base64Data,
-        file.name,
-        `${selectedVehicle.name} ${selectedVehicle.model} ${selectedVehicle.year}`,
-        data.settings?.geminiApiKey || ''
+        vehicleModelStr
       );
+
+      const manual = {
+        uploadedAt: new Date().toISOString(),
+        fileName: file.name,
+        ...manualData
+      };
 
       if (!manual || !manual.fullText) {
         throw new Error('O manual extraído não retornou o texto completo.');

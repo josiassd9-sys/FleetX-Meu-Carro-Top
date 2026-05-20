@@ -55,6 +55,7 @@ interface VehicleDetailHeaderProps {
   onGeneratePassport: () => void;
   isGeneratingPassport: boolean;
   digitalPassport: string | null;
+  onRefreshPredictions: () => void;
   onDiagnose: () => void;
   isDiagnosing: boolean;
   symptomQuery: string;
@@ -120,6 +121,7 @@ export const VehicleDetailHeader: React.FC<VehicleDetailHeaderProps> = ({
   onGeneratePassport,
   isGeneratingPassport,
   digitalPassport,
+  onRefreshPredictions,
   onDiagnose,
   isDiagnosing,
   symptomQuery,
@@ -302,7 +304,18 @@ export const VehicleDetailHeader: React.FC<VehicleDetailHeaderProps> = ({
                     <Calendar className="text-brand-accent" size={20} />
                     <h3 className="text-lg font-black text-white italic uppercase tracking-tighter text-left">Agenda Preditiva IA</h3>
                    </div>
-                   {isLoadingPredictions && <div className="w-4 h-4 border-2 border-brand-accent border-t-transparent rounded-full animate-spin"></div>}
+                   <div className="flex items-center gap-3">
+                     {isLoadingPredictions ? (
+                       <div className="w-4 h-4 border-2 border-brand-accent border-t-transparent rounded-full animate-spin"></div>
+                     ) : (
+                       <button 
+                         onClick={onRefreshPredictions}
+                         className="text-[10px] font-black uppercase text-brand-accent hover:text-white transition-colors bg-brand-accent/10 px-3 py-1 rounded-lg border border-brand-accent/20 flex items-center gap-2"
+                       >
+                         <RefreshCw size={12} /> Atualizar IA
+                       </button>
+                     )}
+                   </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

@@ -161,6 +161,7 @@ export default function App() {
     setDiagnosisResult,
     setTcoAnalysis,
     setDigitalPassport,
+    handleManualRefresh,
     handleDiagnose,
     runHealthAnalysis,
     handleMarketAnalysis,
@@ -279,6 +280,13 @@ export default function App() {
     searchVehicleByPlate,
     handleAssistedProcess,
     handleCaptureFromClipboard: captureFromExternal,
+    foundPhotos,
+    setFoundPhotos,
+    searchQuery,
+    setSearchQuery,
+    isGalleryOpen,
+    setIsGalleryOpen,
+    cooldownRemaining,
     handleRemoveBackground
   } = useRobotSearch(
     currentCountry, data, newVehicle as Vehicle, setNewVehicle, 
@@ -325,6 +333,8 @@ export default function App() {
     }
   };
 
+  // Removido update automático no load para preservar cota da IA
+  /*
   useEffect(() => {
     if (data.vehicles.length > 0) {
       data.vehicles.forEach(v => {
@@ -334,6 +344,7 @@ export default function App() {
       });
     }
   }, []);
+  */
 
   return (
     <>
@@ -410,6 +421,7 @@ export default function App() {
               onGeneratePassport={handleGeneratePassport}
               isGeneratingPassport={isGeneratingPassport}
               digitalPassport={digitalPassport}
+              onRefreshPredictions={handleManualRefresh}
               onDiagnose={handleDiagnose}
               isDiagnosing={isDiagnosing}
               symptomQuery={symptomQuery}
@@ -502,6 +514,13 @@ export default function App() {
         isRemovingBackground={isRemovingBackground}
         searchImage={searchImage}
         isSearchingImage={isSearchingImage}
+        foundPhotos={foundPhotos}
+        setFoundPhotos={setFoundPhotos}
+        searchQuery={searchQuery}
+        onSearch={(query: string) => searchImage(query)}
+        isGalleryOpen={isGalleryOpen}
+        setIsGalleryOpen={setIsGalleryOpen}
+        cooldownRemaining={cooldownRemaining}
         handleCaptureFromClipboard={captureFromExternal}
         robotLogs={robotLogs}
         robotLogsEndRef={robotLogsEndRef}

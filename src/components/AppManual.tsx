@@ -1,0 +1,325 @@
+
+import React from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  ChevronDown, 
+  Car, 
+  Cpu, 
+  Fuel, 
+  Settings, 
+  Bell, 
+  GalleryHorizontal, 
+  BarChart3, 
+  ShieldCheck, 
+  Search,
+  Sparkles,
+  Wrench,
+  Package,
+  HeartPulse,
+  CalendarClock,
+  TrendingUp,
+  ClipboardList,
+  Share2,
+  UserCog,
+  Save,
+  FileText,
+  Activity,
+  History,
+  Globe,
+  Link2,
+  Key
+} from 'lucide-react';
+
+interface ManualItemProps {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  isOpen: boolean;
+  onToggle: () => void;
+}
+
+const ManualItem: React.FC<ManualItemProps> = ({ title, icon, children, isOpen, onToggle }) => {
+  return (
+    <div className="border-b border-gray-100 last:border-0">
+      <button
+        onClick={onToggle}
+        className={`w-full flex items-center justify-between p-4 sm:p-6 transition-all hover:bg-gray-50/50 ${isOpen ? 'bg-gray-50/80 shadow-inner' : ''}`}
+      >
+        <div className="flex items-center gap-3 sm:gap-4 text-left">
+          <div className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl shrink-0 ${isOpen ? 'bg-brand-primary text-white' : 'bg-gray-100 text-gray-400'}`}>
+            {icon}
+          </div>
+          <span className={`text-[11px] sm:text-sm font-black uppercase tracking-tighter ${isOpen ? 'text-brand-primary' : 'text-gray-500'}`}>
+            {title}
+          </span>
+        </div>
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          className={isOpen ? 'text-brand-primary' : 'text-gray-300'}
+        >
+          <ChevronDown size={20} />
+        </motion.div>
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div className="p-5 sm:p-8 pt-0 text-[13px] sm:text-sm text-gray-600 leading-relaxed font-medium space-y-4">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export const AppManual: React.FC = () => {
+  const [openIndex, setOpenIndex] = React.useState<number | null>(null);
+
+  const toggleIndex = (index: number) => {
+    setOpenIndex(openIndex === index ? null : index);
+  };
+
+  return (
+    <div className="bg-white rounded-2xl sm:rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm">
+      <ManualItem
+        title="Guia de Início Rápido (Step-by-Step)"
+        icon={<Sparkles size={20} />}
+        isOpen={openIndex === 0}
+        onToggle={() => toggleIndex(0)}
+      >
+        <div className="space-y-6">
+          <div>
+            <h4 className="font-black text-brand-primary uppercase text-[10px] mb-2 tracking-widest">1. Cadastrando o Primeiro Veículo</h4>
+            <p className="text-[11px] mb-2">Abra o app, clique no botão <strong>"+"</strong>. Digite a placa. O robô FleetX buscará os dados. Confirme marca e modelo. Salve. Pronto, seu veículo agora tem uma identidade digital.</p>
+          </div>
+          <div>
+            <h4 className="font-black text-brand-primary uppercase text-[10px] mb-2 tracking-widest">2. O Primeiro Envio ao Mecânico</h4>
+            <p className="text-[11px] mb-2">No cabeçalho do veículo, clique no ícone de <strong>Compartilhar (Share)</strong>. Selecione "Gerar Cartão do Veículo". Envie o arquivo ou link via WhatsApp para seu mecânico.</p>
+          </div>
+          <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 italic text-[11px]">
+            <strong>Cenário Real:</strong> Imaginemos que você está na recepção da oficina. Em vez de falar tudo de cor, você envia o cartão digital. O mecânico abre no FleetX dele e já sabe que sua última troca de correia foi há 20 mil km.
+          </div>
+        </div>
+      </ManualItem>
+
+      <ManualItem
+        title="Protocolo do Mecânico: Do Recebimento à Entrega"
+        icon={<UserCog size={20} />}
+        isOpen={openIndex === 1}
+        onToggle={() => toggleIndex(1)}
+      >
+        <p>Este é o fluxo de trabalho ideal para profissionais que buscam transparência:</p>
+        <div className="space-y-4">
+          <div className="border-l-2 border-brand-primary pl-4">
+            <h5 className="font-black text-[10px] uppercase text-gray-800">A. Recebimento e Orçamento</h5>
+            <p className="text-[11px]">O mecânico recebe o veículo no sistema. Ele clica em <strong>"Novo Orçamento"</strong>, cataloga as peças necessárias e envia o PDF/Arquivo de orçamento para aprovação do dono.</p>
+          </div>
+          <div className="border-l-2 border-brand-primary pl-4">
+            <h5 className="font-black text-[10px] uppercase text-gray-800">B. Ordem de Serviço (OS)</h5>
+            <p className="text-[11px]">Após aprovado, o orçamento vira uma OS. O mecânico anexa fotos das peças velhas e das novas para comprovar a execução.</p>
+          </div>
+          <div className="border-l-2 border-brand-primary pl-4">
+            <h5 className="font-black text-[10px] uppercase text-gray-800">C. Devolução com Inteligência</h5>
+            <p className="text-[11px]">Ao finalizar, o mecânico clica em <strong>"Concluir e Enviar"</strong>. O dono recebe o relatório final, clica em "Importar" no seu app e o KM do carro é atualizado automaticamente junto com o acervo de peças.</p>
+          </div>
+        </div>
+      </ManualItem>
+
+      <ManualItem
+        title="Auditoria: Integridade do Documento"
+        icon={<ShieldCheck size={20} />}
+        isOpen={openIndex === 2}
+        onToggle={() => toggleIndex(2)}
+      >
+        <p>Um histórico de manutenção só vale dinheiro se for íntegro. No FleetX, cada registro é "auditado" por tecnologia invisível:</p>
+        <ul className="list-disc ml-6 space-y-2">
+          <li><strong>Logs Forenses:</strong> Toda vez que um mecânico salva um serviço, o sistema registra silenciosamente o <strong>ID Único do Aparelho</strong>, a <strong>Data e Hora Exata</strong> e a <strong>Localização Geográfica</strong> (se habilitada).</li>
+          <li><strong>Certificado de Origem:</strong> No relatório final, consta uma assinatura digital que prova que aquele documento foi gerado pelo sistema e não editado em um editor de texto comum.</li>
+          <li><strong>Bloqueio de Retroatividade:</strong> O sistema impede que serviços sejam inseridos com datas ou quilometragens incoerentes sem deixar um aviso de "Divergência de Auditoria" no laudo final.</li>
+        </ul>
+      </ManualItem>
+
+      <ManualItem
+        title="Benefícios da Relação Dono x Mecânico"
+        icon={<TrendingUp size={20} />}
+        isOpen={openIndex === 3}
+        onToggle={() => toggleIndex(3)}
+      >
+        <p>Por que usar este ecossistema em vez de papel e caneta?</p>
+        <ul className="list-disc ml-6 space-y-3">
+          <li><strong>Valorização na Venda:</strong> Um carro com "Laudo FleetX" pode valer até 15% mais no mercado de usados, pois elimina o medo do comprador sobre manutenções negligenciadas.</li>
+          <li><strong>Liberdade de Escolha:</strong> Se você viajar e precisar de outra oficina, o novo mecânico lerá o QR Code do seu carro e saberá exatamente o que foi feito pelo mecânico anterior.</li>
+          <li><strong>Garantia de Peças:</strong> O sistema te avisa quando uma peça trocada está chegando ao fim da garantia, permitindo que você acione a oficina a tempo.</li>
+          <li><strong>Economia Real:</strong> Evite o "empurrometro". Com a Agenda Preditiva, você só troca o que realmente precisa, baseado no desgaste real e não no 'achismo'.</li>
+        </ul>
+      </ManualItem>
+
+      <ManualItem
+        title="Continuidade Técnica: O Legado para Futuros Mecânicos"
+        icon={<History size={20} />}
+        isOpen={openIndex === 4}
+        onToggle={() => toggleIndex(4)}
+      >
+        <p>O FleetX foi projetado para que o conhecimento sobre o carro nunca se perca, independentemente de quantas vezes você trocar de oficina.</p>
+        <ul className="list-disc ml-6 space-y-3">
+          <li><strong>Facilitação para Novos Mecânicos:</strong> Quando um novo profissional assume o veículo, ele tem acesso imediato a todo o histórico de serviços, marcas de peças utilizadas e diagnósticos anteriores. Isso evita redundâncias e garante que ele comece o trabalho com clareza total.</li>
+          <li><strong>Entendimento de Dificuldades:</strong> Relatórios detalhados permitem que o novo mecânico entenda possíveis dificuldades técnicas já enfrentadas no passado, facilitando a resolução de problemas recorrentes.</li>
+          <li><strong>Transparência entre Oficinas:</strong> O histórico auditado serve como uma prova técnica da saúde do veículo, permitindo que diferentes profissionais colaborem indiretamente para a longevidade do automóvel.</li>
+        </ul>
+      </ManualItem>
+
+      <ManualItem
+        title="Agenda Preditiva: A Inteligência do Futuro"
+        icon={<CalendarClock size={20} />}
+        isOpen={openIndex === 5}
+        onToggle={() => toggleIndex(5)}
+      >
+        <p>Como o FleetX sabe quando você deve ir à oficina?</p>
+        <ul className="list-disc ml-6 space-y-2">
+          <li><strong>Cálculo de KM Médio:</strong> Ao registrar dois abastecimentos ou serviços com KM diferentes, o sistema entende seu padrão de uso.</li>
+          <li><strong>Sugestão de Manutenção:</strong> Se o manual diz "trocar óleo a cada 10 mil km ou 1 ano", o FleetX cruza seu KM médio para te avisar 30 dias antes da data provável.</li>
+          <li><strong>Estratégia de Custo:</strong> O sistema simula o gasto anual previsto, permitindo que você se planeje financeiramente para revisões pesadas (como correia dentada ou suspensão).</li>
+        </ul>
+      </ManualItem>
+
+      <ManualItem
+        title="Inteligência de Consumo"
+        icon={<Fuel size={20} />}
+        isOpen={openIndex === 6}
+        onToggle={() => toggleIndex(6)}
+      >
+        <p>Análise profunda de eficiência energética e gastos operacionais.</p>
+        <ul className="list-disc ml-6 space-y-2">
+          <li><strong>Gráficos de Desempenho:</strong> Gráficos interativos que mostram a evolução do consumo de combustível (Km/L).</li>
+          <li><strong>Custo Operacional:</strong> Cálculo automático de custo por quilômetro rodado, incluindo depreciação e manutenção.</li>
+          <li><strong>Comparativo Inteligente:</strong> Saiba se seu modo de condução ou o combustível utilizado está impactando no bolso.</li>
+        </ul>
+      </ManualItem>
+
+      <ManualItem
+        title="Relatório Técnico e Manual IA"
+        icon={<FileText size={20} />}
+        isOpen={openIndex === 7}
+        onToggle={() => toggleIndex(7)}
+      >
+        <p>Transforme dados brutos em documentos profissionais e inteligência imediata.</p>
+        <ul className="list-disc ml-6 space-y-2">
+          <li><strong>Manual Digital do Veículo:</strong> Nossa IA processa o manual do fabricante e responde dúvidas técnicas sobre pressão de pneus, tipos de fluidos e capacidades.</li>
+          <li><strong>Relatório para Venda:</strong> Gere um PDF elegante com todo o histórico de manutenção, valorizando o veículo na hora da negociação.</li>
+          <li><strong>Auditoria e Alertas:</strong> Relatório consolidado de todas as inconsistências e itens pendentes de atenção.</li>
+        </ul>
+      </ManualItem>
+
+      <ManualItem
+        title="Estratégia de Negócio e Gestão de Frota"
+        icon={<TrendingUp size={20} />}
+        isOpen={openIndex === 8}
+        onToggle={() => toggleIndex(8)}
+      >
+        <p>Para lojistas e colecionadores, o FleetX atua como um ERP automotivo simplificado:</p>
+        <div className="space-y-4">
+          <div className="bg-green-50 p-4 rounded-xl border border-green-100">
+            <h4 className="font-black text-green-700 uppercase text-[10px] mb-2 tracking-widest">Análise de ROI e Valuation</h4>
+            <p className="text-[11px]">O sistema cruza o valor de compra, os custos de preparação (estética + mecânica) e o valor de mercado (FIPE) para te dar a margem de lucro real de cada unidade da frota.</p>
+          </div>
+          <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <h4 className="font-black text-gray-700 uppercase text-[10px] mb-2 tracking-widest">Fluxo de Reentrada (Pós-Oficina)</h4>
+            <p className="text-[11px]">Ao receber o veículo do mecânico, o dono deve: <br/>
+            1. Abrir o arquivo de importação enviado pelo profissional. <br/>
+            2. Conferir se o KM final da OS bate com o painel do carro. <br/>
+            3. Confirmar a importação para que os alertas de "Saúde" do veículo sejam resetados automaticamente.</p>
+          </div>
+          <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <h4 className="font-black text-gray-700 uppercase text-[10px] mb-2 tracking-widest">Relatório de Venda (Showroom)</h4>
+            <p className="text-[11px]">Gere um laudo técnico para o novo comprador. Isso remove a barreira da desconfiança, pois ele verá que cada peça foi auditada com logs de data, hora e oficina responsável.</p>
+          </div>
+        </div>
+      </ManualItem>
+
+      <ManualItem
+        title="Manual do Veículo IA"
+        icon={<Sparkles size={20} />}
+        isOpen={openIndex === 9}
+        onToggle={() => toggleIndex(9)}
+      >
+        <p>A tecnologia de leitura de manuais via IA permite que você tire dúvidas técnicas instantâneas sobre qualquer PDF anexado ao veículo.</p>
+        <ul className="list-disc ml-6 space-y-2">
+          <li><strong>Consultas Técnicas:</strong> Pergunte "Qual a pressão dos pneus com carga total?" e a IA lerá o manual original para te responder.</li>
+          <li><strong>Especificações de Fluidos:</strong> Identifique rapidamente o tipo exato de óleo, fluido de freio ou líquido de arrefecimento recomendado.</li>
+          <li><strong>Planos de Revisão:</strong> A IA extrai as tabelas de revisão do fabricante para alimentar sua Agenda Preditiva automaticamente.</li>
+        </ul>
+      </ManualItem>
+
+      <ManualItem
+        title="Configurações Regionais: Identidade do App"
+        icon={<Globe size={20} />}
+        isOpen={openIndex === 10}
+        onToggle={() => toggleIndex(10)}
+      >
+        <p>Ajuste o FleetX para falar a sua língua e usar a sua moeda. Na aba <strong>Regional</strong> das configurações, você define a base operacional do sistema:</p>
+        <ul className="list-disc ml-6 space-y-2">
+          <li><strong>Idioma do Sistema:</strong> Altera todos os rótulos e comandos do aplicativo. Ideal para usuários em diferentes países.</li>
+          <li><strong>Símbolo Monetário:</strong> Defina se seus relatórios devem exibir <strong>R$</strong>, <strong>€</strong>, <strong>$</strong> ou qualquer outra moeda.</li>
+          <li><strong>Rótulo de Identificação:</strong> Mude o termo principal de identificação do veículo. <br/>
+          <em>Exemplo:</em> No Brasil usamos "Placa", em Portugal usa-se "Matrícula". Basta alterar aqui e todo o app se adapta.</li>
+        </ul>
+      </ManualItem>
+
+      <ManualItem
+        title="Robô de Busca: Customização de Pesquisa"
+        icon={<Link2 size={20} />}
+        isOpen={openIndex === 11}
+        onToggle={() => toggleIndex(11)}
+      >
+        <p>O <strong>Robô</strong> é o seu assistente de pesquisa externa. Na aba correspondente, você pode ensinar ao FleetX onde buscar informações sobre seus veículos:</p>
+        <ul className="list-disc ml-6 space-y-2">
+          <li><strong>Adicionar Links de Consulta:</strong> Insira URLs de portais de autopeças, sites de consulta de placas ou bancos de imagens.</li>
+          <li><strong>Uso de Variáveis:</strong> Ao cadastrar um link, use a tag <code>{'{{VALOR}}'}</code>. O sistema substituirá automaticamente pela Placa/Matrícula do carro ao clicar no botão de busca.</li>
+          <li><strong>Cenário de Uso:</strong> Cadastre o link de um catálogo de peças. Ao clicar na "Lupa" no card do carro, o app abre o site já filtrado para o seu veículo específico, economizando tempo precioso.</li>
+        </ul>
+      </ManualItem>
+
+      <ManualItem
+        title="Inteligência Artificial: Configuração de Chave"
+        icon={<Key size={20} />}
+        isOpen={openIndex === 12}
+        onToggle={() => toggleIndex(12)}
+      >
+        <p>O cérebro do FleetX depende de uma conexão com o <strong>Gemini (Google)</strong>. Veja como configurar:</p>
+        <div className="space-y-4">
+          <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 italic text-[11px]">
+            <strong>Por que preciso de uma chave?</strong> A IA tem um custo operacional. Ao inserir sua própria chave gratuita do Google AI Studio, você garante que as funções de leitura de manuais e diagnósticos funcionem sem limites impostos por nós.
+          </div>
+          <ul className="list-disc ml-6 space-y-2">
+            <li><strong>Onde conseguir:</strong> Vá em Configurações &gt; Chave API e clique no link do Google AI Studio. É grátis para uso pessoal.</li>
+            <li><strong>Como instalar:</strong> Basta copiar a chave gerada lá e colá-la no campo "Chave API" dentro do app.</li>
+            <li><strong>Exemplo de uso:</strong> Após salvar a chave, anexe o PDF do manual do seu carro. No card do veículo, surgirá o botão "IA Manual". Ali você pode perguntar qualquer coisa técnica e o robô responderá com precisão cirúrgica.</li>
+          </ul>
+        </div>
+      </ManualItem>
+
+      <ManualItem
+        title="Segurança, Backup e Privacidade"
+        icon={<ShieldCheck size={20} />}
+        isOpen={openIndex === 13}
+        onToggle={() => toggleIndex(13)}
+      >
+        <p>Seus dados são sagrados e estão sob seu total controle.</p>
+        <ul className="list-disc ml-6 space-y-2">
+          <li><strong>Dados Locais:</strong> Todas as informações são armazenadas via LocalStorage. Nada é enviado para nuvens externas sem sua ação direta.</li>
+          <li><strong>Backup e Restauração:</strong> Gere um arquivo JSON com 100% dos dados da sua frota para migração rápida entre aparelhos.</li>
+          <li><strong>Privacidade do Robô:</strong> Configure quais portais de busca o sistema deve utilizar para manter sua navegação eficiente.</li>
+        </ul>
+      </ManualItem>
+    </div>
+  );
+};

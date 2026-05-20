@@ -24,9 +24,29 @@ export function useRobotSearch(
   const [isCapturingFromWeb, setIsCapturingFromWeb] = useState(false);
   const [isProcessingAssisted, setIsProcessingAssisted] = useState(false);
   const [rawPastedData, setRawPastedData] = useState('');
+  const [foundPhotos, setFoundPhotos] = useState<string[]>([]);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
   
   const robotPopupRef = useRef<Window | null>(null);
   const robotLogsEndRef = useRef<HTMLDivElement>(null);
+
+  // Poll for cooldown status
+  useEffect(() => {
+    const checkCooldown = async () => {
+      try {
+        const remaining = await geminiService.getCooldownRemaining();
+        if (typeof remaining === 'number') {
+          setCooldownRemaining(remaining);
+        }
+      } catch (e) {}
+    };
+
+    checkCooldown();
+    const interval = setInterval(checkCooldown, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (robotLogsEndRef.current) {
@@ -34,73 +54,81 @@ export function useRobotSearch(
     }
   }, [robotLogs]);
 
-  const searchImage = async () => {
+  const searchImage = async (customQuery?: string | any) => {
+    const queryStr = (typeof customQuery === 'string' && customQuery.trim().length > 0) ? customQuery.trim() : null;
+    
+    // Se for um link direto de imagem, aplica imediatamente em vez de pesquisar
+    if (queryStr && queryStr.startsWith('http')) {
+      const isImage = /\.(jpg|jpeg|png|webp|gif|svg|avif)/i.test(queryStr) || queryStr.includes('images');
+      if (isImage) {
+        if (selectedVehicle) {
+          updateSelectedVehicle({ imageUrl: queryStr });
+        } else {
+          setNewVehicle((prev: any) => ({ ...prev, imageUrl: queryStr }));
+        }
+        setPlateSearchStatus('✨ Foto aplicada via link!');
+        setIsGalleryOpen(false);
+        return;
+      }
+    }
+
+    const fullDescription = queryStr || `${newVehicle.name} ${newVehicle.model} ${newVehicle.version || ''} ${newVehicle.year || ''}`.trim();
+    setSearchQuery(fullDescription);
+    const fallbackSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(fullDescription + ' foto oficial alta resolução')}&tbm=isch`;
+
+    if (cooldownRemaining > 0) {
+      if (confirm(`A IA está em repouso (${cooldownRemaining}s). Abrir busca manual agora?`)) {
+        window.open(fallbackSearchUrl, '_blank');
+      }
+      return;
+    }
+
     if (!newVehicle.name || !newVehicle.model) {
       alert('Preencha Marca e Modelo primeiro');
       return;
     }
 
+    // ABRIR GALERIA IMEDIATAMENTE (Navegador Integrado)
     setIsSearchingImage(true);
-    const fullDescription = `${newVehicle.name} ${newVehicle.model} ${newVehicle.year || ''}`.trim();
-    setRobotLogs(prev => [...prev, `[ROBOT] Buscando foto original: ${fullDescription}...`, '[SCAN] Vasculhando arquivos oficiais...']);
+    setFoundPhotos([]);
+    setIsGalleryOpen(true);
+    
+    setRobotLogs(prev => [...prev, `[ROBOT] Buscando fotos de: ${fullDescription}...`]);
     
     try {
-      const { url, candidates, searchUrl } = await geminiService.searchVehicleImage(fullDescription);
+      const { url, candidates } = await geminiService.searchVehicleImage(fullDescription);
       
-      let validUrl = null;
-      const testImage = (src: string): Promise<boolean> => {
-        return new Promise((resolve) => {
-          const img = new Image();
-          img.onload = () => resolve(true);
-          img.onerror = () => resolve(false);
-          img.src = src;
-          setTimeout(() => resolve(false), 5000);
-        });
-      };
-
-      const linksToTest = candidates && candidates.length > 0 ? candidates : (url ? [url] : []);
+      const allLinks = Array.from(new Set([url, ...(candidates || [])].filter(Boolean) as string[]));
       
-      for (const link of linksToTest) {
-        setRobotLogs(prev => [...prev, `[TEST] Verificando link: ${link.substring(0, 30)}...`]);
-        const isValid = await testImage(link);
-        if (isValid) {
-          validUrl = link;
-          break;
-        } else {
-          setRobotLogs(prev => [...prev, '[FAIL] Link quebrado ou inacessível. Tentando próximo...']);
-        }
-      }
-
-      if (validUrl) {
-        setNewVehicle((prev: any) => ({ ...prev, imageUrl: validUrl }));
-        setRobotLogs(prev => [
-          ...prev, 
-          '[SUCCESS] Foto Original Validada e Localizada!', 
-          '[ACTION] Abrindo imagem para você salvar...',
-          '[INFO] Esta imagem passou no teste de integridade do robô.'
-        ]);
-        window.open(validUrl, '_blank');
-        setPlateSearchStatus('📸 Foto validada e aberta! Salve-a e carregue no veículo.');
-        setTimeout(() => setPlateSearchStatus(''), 10000);
+      if (allLinks.length > 0) {
+        setFoundPhotos(allLinks);
+        setPlateSearchStatus('📸 Galeria atualizada!');
       } else {
-        setRobotLogs(prev => [
-          ...prev, 
-          '[WARN] Nenhum link direto passou no teste de integridade.',
-          '[ACTION] Abrindo galeria de busca para seleção manual segura...'
-        ]);
-        window.open(searchUrl, '_blank');
-        setPlateSearchStatus('🔎 Abrindo busca manual de alta resolução...');
-        setTimeout(() => setPlateSearchStatus(''), 5000);
+        setRobotLogs(prev => [...prev, '[WARN] Sem fotos diretas.']);
+        setPlateSearchStatus('🔎 Tente busca manual.');
       }
-    } catch (err) {
-      console.error('Erro ao buscar imagem oficial:', err);
-      setRobotLogs(prev => [...prev, '[ERROR] Falha crítica na busca do robô.']);
+    } catch (err: any) {
+      console.error('Erro ao buscar imagem:', err);
+      const errorMessage = typeof err?.message === 'string' ? err.message : String(err || '');
+      const isLimit = errorMessage.includes('LIMITE_IA') || errorMessage.includes('429') || errorMessage.includes('limit');
+      
+      setRobotLogs(prev => [
+        ...prev, 
+        isLimit 
+          ? '[WARN] Google temporariamente ocupado. Aguarde o contador de recarga ou use a busca manual acima.' 
+          : `[ERROR] Falha técnica: ${errorMessage.substring(0, 50)}...`
+      ]);
+      setPlateSearchStatus(isLimit ? '⏳ IA em Cooldown' : '⚠️ Erro na Busca');
     } finally {
       setIsSearchingImage(false);
     }
   };
 
   const searchLogo = async (brandName: string, isFromDetail = false) => {
+    if (cooldownRemaining > 0) {
+      alert(`Limite de IA atingido. Aguarde ${cooldownRemaining}s.`);
+      return;
+    }
     if (!brandName) {
       alert('Preencha a marca primeiro');
       return;
@@ -111,28 +139,39 @@ export function useRobotSearch(
     
     try {
       const { url, candidates, searchUrl } = await geminiService.searchVehicleLogo(brandName);
-      let validUrl = null;
+      
       const testImage = (src: string): Promise<boolean> => {
         return new Promise((resolve) => {
+          if (!src || typeof src !== 'string' || !src.startsWith('http')) return resolve(false);
           const img = new Image();
           img.onload = () => resolve(true);
           img.onerror = () => resolve(false);
           img.src = src;
-          setTimeout(() => resolve(false), 5000);
+          setTimeout(() => resolve(false), 4000); // 4s para logos (geralmente menores/rápidos)
         });
       };
 
-      const linksToTest = candidates && candidates.length > 0 ? candidates : (url ? [url] : []);
-      for (const link of linksToTest) {
-        setRobotLogs(prev => [...prev, `[TEST] Verificando logo: ${link.substring(0, 30)}...`]);
-        const isValid = await testImage(link);
-        if (isValid) {
-          validUrl = link;
-          break;
-        } else {
-          setRobotLogs(prev => [...prev, '[FAIL] Link quebrado ou sem transparência. Tentando próximo...']);
-        }
+      const linksToTestSet = new Set<string>();
+      if (url) linksToTestSet.add(url);
+      if (Array.isArray(candidates)) {
+        candidates.forEach(c => { if (c) linksToTestSet.add(c); });
       }
+      
+      const linksToTest = Array.from(linksToTestSet);
+      setRobotLogs(prev => [...prev, `[ROBOT] Validando ${linksToTest.length} fontes de logotipo em paralelo...`]);
+
+      // Testar em paralelo e pegar o primeiro válido
+      let validUrl = null;
+      const testPromises = linksToTest.map(async (link) => {
+        const isValid = await testImage(link);
+        if (isValid && !validUrl) {
+          validUrl = link;
+          return link;
+        }
+        return null;
+      });
+
+      await Promise.all(testPromises);
 
       if (validUrl) {
         if (isFromDetail) {
@@ -162,6 +201,10 @@ export function useRobotSearch(
   };
 
   const searchVehicleByPlate = async () => {
+    if (cooldownRemaining > 0) {
+      setPlateSearchStatus(`⏳ Aguarde ${cooldownRemaining}s (Limite IA)`);
+      return;
+    }
     const plate = newVehicle.plate?.toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (!plate || plate.length !== 7) {
       alert('Digite uma placa completa com 7 caracteres (ex: ABC1D23)');
@@ -258,9 +301,19 @@ export function useRobotSearch(
     }
   };
 
-  const handleAssistedProcess = async (textOverride?: string) => {
-    const dataToProcess = textOverride || rawPastedData;
-    if (!dataToProcess.trim()) return;
+  const handleAssistedProcess = async (textOverride?: string | any) => {
+    if (cooldownRemaining > 0) {
+      setPlateSearchStatus(`⏳ IA em espera (${cooldownRemaining}s)`);
+      return;
+    }
+    // Evita passar o objeto de evento do React para a IA
+    const inputStr = (typeof textOverride === 'string') ? textOverride : null;
+    const dataToProcess = inputStr || rawPastedData || '';
+    const textStr = String(dataToProcess);
+    if (!textStr.trim() || textStr === '[object Object]') {
+      if (textStr === '[object Object]') console.warn('AIAssisted: Ignorado objeto recebido como string');
+      return;
+    }
     
     setIsProcessingAssisted(true);
     setPlateSearchStatus('🧠 IA: Analisando texto e extraindo dados...');
@@ -294,11 +347,15 @@ export function useRobotSearch(
         }
         setTimeout(() => setPlateSearchStatus('✓ Cadastro preenchido!'), 2000);
       } else {
-        setPlateSearchStatus('⚠️ Erro na interpretação.');
-        alert('Não foi possível identificar dados. Tente copiar novamente.');
+        const errorMsg = result?.error || 'Não foi possível identificar dados.';
+        setPlateSearchStatus(`⚠️ ${errorMsg}`);
+        alert(errorMsg);
       }
     } catch (error: any) {
-      alert('Erro ao processar dados.');
+      console.error('Assisted Process Error:', error);
+      const errorMsg = error.message || 'Erro ao processar dados com IA.';
+      setPlateSearchStatus(`❌ Falha: ${errorMsg}`);
+      alert(errorMsg);
     } finally {
       setIsProcessingAssisted(false);
     }
@@ -360,6 +417,13 @@ export function useRobotSearch(
     isProcessingAssisted,
     rawPastedData,
     setRawPastedData,
+    foundPhotos,
+    setFoundPhotos,
+    searchQuery,
+    setSearchQuery,
+    isGalleryOpen,
+    setIsGalleryOpen,
+    cooldownRemaining,
     robotLogsEndRef,
     searchImage,
     searchLogo,

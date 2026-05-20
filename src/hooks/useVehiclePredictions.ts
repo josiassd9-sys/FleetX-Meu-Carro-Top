@@ -38,7 +38,9 @@ export function useVehiclePredictions(selectedVehicle: Vehicle | null, data: App
 
   useEffect(() => {
     if (selectedVehicle) {
-      fetchPredictions(selectedVehicle);
+      // Automatic fetch disabled to save quota
+      // fetchPredictions(selectedVehicle);
+      setMaintenancePredictions([]);
       setDiagnosisResult(null);
       setSymptomQuery('');
       setFuelInsight(null);
@@ -47,6 +49,10 @@ export function useVehiclePredictions(selectedVehicle: Vehicle | null, data: App
       setDigitalPassport(null);
     }
   }, [selectedVehicle?.id]);
+
+  const handleManualRefresh = () => {
+    if (selectedVehicle) fetchPredictions(selectedVehicle);
+  };
 
   const handleDiagnose = async () => {
     if (!symptomQuery || !selectedVehicle) return;
@@ -184,6 +190,7 @@ export function useVehiclePredictions(selectedVehicle: Vehicle | null, data: App
     setDiagnosisResult,
     setTcoAnalysis,
     setDigitalPassport,
+    handleManualRefresh,
     handleDiagnose,
     runHealthAnalysis,
     handleMarketAnalysis,
