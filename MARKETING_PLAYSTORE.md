@@ -30,6 +30,13 @@ Organize a vida do seu carro como um engenheiro:
 - **Auditoria de Integridade**: Gere um índice de confiança que prova ao futuro comprador que seu carro foi impecavelmente bem cuidado.
 - **Agenda Preditiva**: Seja avisado sobre futuras revisões antes que o problema apareça.
 
+### 🤝 PROPRIETÁRIO & MECÂNICO: PARCERIA AUDITÁVEL E CONFIANÇA TOTAL
+A relação com a sua oficina de reparação mecânica nunca mais será a mesma! O FleetX cria um novo padrão de transparência e profissionalismo mútuo:
+- **Transparência Sem Margem para Dúvidas**: Esqueça o "achismo" ou o "disse me disse". Ao levar seu carro para a oficina, você apresenta um histórico cirúrgico de tudo o que já foi feito, com códigos de peças e datas exatas. Seu mecânico favorito recebe um veículo "com prontuário médico", facilitando diagnósticos rápidos e precisão absoluta.
+- **Histórico Blindado Contra Retrabalhos**: Registre fotos da peça gasta ao lado da nova na caixa, ordens de serviço assinadas e notas fiscais. Com esse dossiê fotográfico e técnico auditável, você evita cobranças em duplicidade ou erros de peças em manutenções recorrentes.
+- **Valorização do Mecânico de Verdade**: O app possui espaço exclusivo para cadastrar quem executou o trabalho. Isso destaca e prestigia os profissionais altamente capacitados que realmente trabalharam no seu veículo, criando uma relação de respeito e confiança de longo prazo.
+- **O Certificado que Fecha Negócios**: Na hora de vender, repassar esse dossiê auditável é o divisor de águas. O comprador adquire o veículo sabendo que cada manutenção tem assinatura técnica, imagem comprovante e registro verdadeiro de quilometragem.
+
 ### 💰 ECONOMIA EXTREMA: O DETECTOR DE DESPERDÍCIOS PARA SEU BOLSO
 Ter um automóvel não precisa ser sinônimo de contas abusivas. O FleetX é o seu escudo financeiro definitivo na relação com oficinas e autopeças:
 
