@@ -19,21 +19,26 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const { user, credits, isPro } = useFirebase();
 
   return (
-    <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-6">
-      <div className="flex items-center gap-4">
+    <header className="flex flex-col gap-4 mb-6">
+      {/* Linha 1: Logotipo Retangular Elevado e Centralizado */}
+      <div className="flex justify-center w-full">
         <motion.div 
-          whileHover={{ rotate: 10, scale: 1.1 }}
-          className="bg-white p-2 rounded-2xl shadow-lg shadow-gray-200/50 shrink-0 border border-gray-100"
+          whileHover={{ scale: 1.01, y: -2 }}
+          className="w-full h-32 sm:h-48 rounded-2xl shadow-xl shadow-gray-200/40 shrink-0 border border-zinc-800/50 flex items-center justify-center overflow-hidden bg-brand-primary"
         >
           <img 
-            src="/src/assets/images/fleetx_final_logo_1779384389550.png" 
+            src="/src/assets/images/fleetx_logo_strada.png" 
             alt="FleetX Logo" 
-            className="w-10 h-10 object-contain"
+            className="max-w-[95%] max-h-[95%] object-contain"
           />
         </motion.div>
-        <div>
+      </div>
+
+      {/* Linha 2: Título do App e Foto de Acesso (Login) */}
+      <div className="flex justify-between items-center w-full pt-1">
+        <div className="text-left">
           <div className="flex items-center gap-2 mb-0.5">
-             <h1 className="text-3xl font-black tracking-tight text-brand-primary leading-none uppercase italic">
+             <h1 className="text-2xl font-black tracking-tight text-brand-primary leading-none uppercase italic">
                {data.settings?.appName || 'FleetX'}
              </h1>
              {isPro && (
@@ -45,32 +50,27 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <p className="text-[9px] text-gray-400 font-bold uppercase tracking-[0.2em] leading-none">Sistema de Gestão Ativo</p>
           </div>
         </div>
-      </div>
-      
-      <div className="flex items-center gap-3 w-full lg:w-auto overflow-x-auto no-scrollbar pb-1 lg:pb-0">
+
+        {/* Conta do Usuário no extremo direito */}
         {user && (
           <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-3 bg-white border border-gray-100 rounded-2xl px-4 py-2.5 shadow-sm shrink-0"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex items-center gap-3 bg-white border border-gray-100 rounded-2xl p-1.5 shadow-sm shrink-0"
           >
-            <div className="text-right">
-               <p className="text-[8px] font-black uppercase text-gray-400 tracking-widest leading-tight">Créditos IA</p>
-               <div className="flex items-center gap-1 justify-end">
-                  <span className="text-sm font-mono font-black text-brand-primary leading-none italic">{credits}</span>
-                  <Zap size={10} className="text-brand-accent fill-brand-accent" />
-               </div>
-            </div>
             {user.photoURL ? (
-              <img src={user.photoURL} alt="" className="w-8 h-8 rounded-xl border border-gray-100" />
+              <img src={user.photoURL} alt={user.displayName || ""} className="w-9 h-9 rounded-xl border border-gray-100" />
             ) : (
-              <div className="w-8 h-8 bg-brand-primary text-white rounded-xl flex items-center justify-center text-xs font-black">
-                {user.displayName?.[0] || <UserIcon size={14} />}
+              <div className="w-9 h-9 bg-brand-primary text-white rounded-xl flex items-center justify-center text-sm font-black">
+                {user.displayName?.[0] || <UserIcon size={16} />}
               </div>
             )}
           </motion.div>
         )}
-
+      </div>
+      
+      {/* Linha 3: Botões de Ações */}
+      <div className="flex items-center gap-3 w-full lg:justify-end overflow-x-auto no-scrollbar pb-1 lg:pb-0">
         <motion.button 
           whileHover={{ y: -4, scale: 1.02 }}
           whileTap={{ scale: 0.98 }}

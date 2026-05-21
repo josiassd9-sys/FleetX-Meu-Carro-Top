@@ -1,12 +1,13 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { 
-  Car, Activity, Box, Disc, Gauge, DollarSign, Pin, Trash2, Plus, Download 
+  Car, Activity, Box, Disc, Gauge, DollarSign, Pin, Trash2, Plus, Download, Zap 
 } from 'lucide-react';
 import { Vehicle, AppData } from '../types';
 import { VehicleImage } from './VehicleImage';
 import { BrandLogo } from './BrandLogo';
 import { formatCurrency } from '../lib/utils';
+import { useFirebase } from '../contexts/FirebaseContext';
 
 interface VehicleListProps {
   data: AppData;
@@ -27,6 +28,8 @@ export const VehicleList: React.FC<VehicleListProps> = ({
   importVehicleInputRef,
   formatDistance
 }) => {
+  const { user, credits, isPro } = useFirebase();
+
   return (
     <>
       {/* Dashboard Status Ribbon */}
@@ -42,16 +45,13 @@ export const VehicleList: React.FC<VehicleListProps> = ({
         </div>
 
         <div className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-white rounded border border-gray-50 shadow-sm min-w-[140px]">
-          <Activity size={14} className="text-green-500" />
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mr-1">Saúde</span>
-          <span className="text-sm font-black text-green-600">
-            {data.vehicles.length > 0 ? (
-              (data.vehicles[0].reminders?.some(r => {
-                const diff = new Date(r.targetDate).getTime() - new Date().getTime();
-                return diff < 1000 * 60 * 60 * 24 * 7;
-              }) ? 'Atenção' : 'Excelente')
-            ) : '--'}
-          </span>
+          <Zap size={14} className="text-brand-accent fill-brand-accent" />
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mr-1">Créditos IA</span>
+          {isPro ? (
+            <span className="text-[10px] bg-brand-primary text-white font-black px-1.5 py-0.5 rounded uppercase tracking-widest">PRO</span>
+          ) : (
+            <span className="text-sm font-black text-brand-primary">{user ? credits : '--'}</span>
+          )}
         </div>
         
         <div className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-white rounded border border-gray-50 shadow-sm min-w-[140px]">
