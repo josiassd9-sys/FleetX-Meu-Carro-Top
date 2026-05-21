@@ -1,7 +1,7 @@
 # Instruções do Agente
 
 - **REGRAS DE OURO (LEITURA OBRIGATÓRIA)**:
-  1. Antes de qualquer ação, **VOCÊ DEVE LER O ARQUIVO `README.md`** na raiz do projeto. Ele contém o mapa técnico e as restrições arquiteturais para não "quebrar" o aplicativo.
+  1. Antes de qualquer ação, **VOCÊ DEVE LER O ARQUIVO `README.md` E `LOGICA_NEGOCIO.md`** na raiz do projeto. Eles contêm o mapa técnico, a lógica de negócio e as restrições arquiteturais para não "quebrar" o aplicativo.
   2. Nunca remova a lógica de "LocalFirst" (armazenamento local de veículos) em favor de nuvem sem aviso prévio.
   3. Mantenha as diretrizes de design (FleetX Design System) descritas no README.
 

@@ -5,7 +5,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 const resources = {
   pt: {
     translation: {
-      "app_name": "Meu Carro Top",
+      "app_name": "FleetX - Meu Carro Top",
       "import_vehicle": "Importar Veículo",
       "add_vehicle": "Adicionar Veículo",
       "settings": "Configurações",
@@ -30,7 +30,7 @@ const resources = {
   },
   en: {
     translation: {
-      "app_name": "My Top Car",
+      "app_name": "FleetX - My Top Car",
       "import_vehicle": "Import Vehicle",
       "add_vehicle": "Add Vehicle",
       "settings": "Settings",
@@ -55,7 +55,7 @@ const resources = {
   },
   es: {
     translation: {
-      "app_name": "Mi Carro Top",
+      "app_name": "FleetX - Mi Carro Top",
       "import_vehicle": "Importar Vehículo",
       "add_vehicle": "Agregar Vehículo",
       "settings": "Configuración",
@@ -80,7 +80,7 @@ const resources = {
   },
   fr: {
     translation: {
-      "app_name": "Ma Super Voiture",
+      "app_name": "FleetX - Ma Super Voiture",
       "import_vehicle": "Importer un véhicule",
       "add_vehicle": "Ajouter un véhicule",
       "settings": "Paramètres",
@@ -105,7 +105,7 @@ const resources = {
   },
   it: {
     translation: {
-      "app_name": "La Mia Auto Top",
+      "app_name": "FleetX - La Mia Auto Top",
       "import_vehicle": "Importa Veicolo",
       "add_vehicle": "Aggiungi Veicolo",
       "settings": "Impostazioni",
@@ -130,7 +130,7 @@ const resources = {
   },
   de: {
     translation: {
-      "app_name": "Mein Top Auto",
+      "app_name": "FleetX - Mein Top Auto",
       "import_vehicle": "Fahrzeug importieren",
       "add_vehicle": "Fahrzeug hinzufügen",
       "settings": "Einstellungen",
@@ -155,7 +155,7 @@ const resources = {
   },
   ru: {
     translation: {
-      "app_name": "Мой Авто Топ",
+      "app_name": "FleetX - Мой Авто Топ",
       "import_vehicle": "Импорт автомобиля",
       "add_vehicle": "Добавить автомобиль",
       "settings": "Настройки",
@@ -180,7 +180,7 @@ const resources = {
   },
   zh: {
     translation: {
-      "app_name": "我的顶级爱车",
+      "app_name": "FleetX - 我的顶级爱车",
       "import_vehicle": "导入车辆",
       "add_vehicle": "添加车辆",
       "settings": "设置",
@@ -205,7 +205,7 @@ const resources = {
   },
   ko: {
     translation: {
-      "app_name": "내 최고의 차",
+      "app_name": "FleetX - 내 최고의 차",
       "import_vehicle": "차량 가져오기",
       "add_vehicle": "차량 추가",
       "settings": "설정",

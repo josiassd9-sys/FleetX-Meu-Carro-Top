@@ -1,10 +1,11 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Settings, Palette, Search, Plus, Trash2, Shield, ShieldCheck, Globe, Database, BookOpen, Key, ExternalLink, Check, AlertCircle, Loader2, CheckCircle2, Wallet, Zap, History, TrendingUp, User as UserIcon, LogIn, LogOut, Download } from 'lucide-react';
+import { X, Settings, Palette, Search, Plus, Trash2, Shield, ShieldCheck, Globe, Database, BookOpen, Key, ExternalLink, Check, AlertCircle, Loader2, CheckCircle2, Wallet, Zap, History, TrendingUp, User as UserIcon, LogIn, LogOut, Download, Code } from 'lucide-react';
 import { AppData, VehicleSearchLink } from '../types';
 import { THEMES } from '../constants';
 import { AppManual } from './AppManual';
+import { DevDocsTab } from './DevDocsTab';
 import { geminiService } from '../services/geminiService';
 import { useFirebase } from '../contexts/FirebaseContext';
 
@@ -24,7 +25,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onResetData
 }) => {
   const { user, loading, login, logout, credits, isPro, addCredits, upgradeToPro } = useFirebase();
-  const [activeSubTab, setActiveSubTab] = React.useState<'general' | 'theme' | 'search' | 'privacy' | 'manual' | 'apiKey' | 'wallet' | 'account' | 'data'>('manual');
+  const [activeSubTab, setActiveSubTab] = React.useState<'general' | 'theme' | 'search' | 'privacy' | 'manual' | 'apiKey' | 'wallet' | 'account' | 'data' | 'devDocs'>('manual');
   const [testStatus, setTestStatus] = React.useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = React.useState('');
 
@@ -192,6 +193,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <Database size={14} className="sm:w-4 sm:h-4 shrink-0" /> Backup
                   </button>
 
+                  {user?.email === 'josias.sd9@gmail.com' && (
+                    <button 
+                      onClick={() => setActiveSubTab('devDocs')}
+                      className={`flex items-center gap-1.5 sm:gap-3 px-3 py-2.5 sm:p-4 rounded-lg text-[9px] sm:text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap sm:whitespace-normal flex-1 sm:flex-none justify-center sm:justify-start ${activeSubTab === 'devDocs' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25' : 'text-indigo-500 hover:bg-indigo-50'}`}
+                    >
+                      <Code size={14} className="sm:w-4 sm:h-4 shrink-0" /> DevDocs
+                    </button>
+                  )}
+
                   <div className="hidden sm:flex mt-auto pt-6 border-t border-gray-100">
                      <button 
                        onClick={onResetData}
@@ -204,6 +214,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                {/* Content Area */}
                <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar bg-white text-left">
+                  {activeSubTab === 'devDocs' && (
+                    <DevDocsTab />
+                  )}
+
                   {activeSubTab === 'general' && (
                     <div className="space-y-8">
                        <div>

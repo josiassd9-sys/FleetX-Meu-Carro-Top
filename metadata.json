@@ -1,6 +1,6 @@
 {
-  "name": "Meu Carro Top",
-  "description": "Gestão inteligente de veículos e catálogo detalhado de peças com auxílio de IA.",
+  "name": "FleetX - Meu Carro Top",
+  "description": "A plataforma definitiva para gestão de frotas e cuidados automotivos. Transforme seu veículo em um legado técnico com inteligência artificial e precisão profissional.",
   "requestFramePermissions": ["clipboard-read"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

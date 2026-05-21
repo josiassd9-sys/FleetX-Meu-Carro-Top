@@ -1,48 +1,75 @@
-# FleetX - Sistema de Gestão de Frotas e Manutenção Inteligente
+# FleetX - Guia de Engenharia e Operação (Master Documentation)
 
-## 📌 Visão Geral
-O FleetX é uma aplicação de alta performance para gestão de veículos, focada em usuários avançados e mecânicos que buscam precisão e agilidade. O projeto segue a filosofia **LocalFirst**, garantindo que os dados do usuário nunca saiam do seu dispositivo sem permissão expressa.
-
----
-
-## 🏗️ Arquitetura e Tecnologias
-- **Frontend**: React 18 + Vite + TypeScript.
-- **Estilização**: Tailwind CSS (Design System customizado com foco em contraste e elegância).
-- **Animações**: Framer Motion (Transições fluidas e interfaces responsivas).
-- **Persistência de Dados**: 
-  - **Local**: `localStorage` (Dados de veículos, fotos e histórico).
-  - **Cloud (Nuvem)**: Firebase Firestore + Auth (Apenas para sincronização de **Créditos IA** e **Status PRO**).
-- **Backup**: Sistema proprietário de exportação de arquivos `.fleetx-backup` (JSON estruturado).
+## 📌 Visão Geral e Propósito
+O **FleetX** é um ecossistema de gestão automotiva de elite. Ele não é apenas um rastreador de despesas, mas um **Legado Técnico** para o veículo. Projetado para mecânicos e proprietários exigentes, o app transforma dados brutos em decisões inteligentes, preservando o valor de revenda e a segurança operacional.
 
 ---
 
-## 🚀 Funcionalidades Principais
-1. **Gestão de Veículos**: Cadastro detalhado com identificação por placa/VIN, fotos e metadados.
-2. **Consultoria IA**: Integração com Gemini 2.0 Flash para análise de manuais PDF, identificação de peças e suporte técnico.
-3. **Carteira de Créditos**: Sistema sincronizado em tempo real via Firebase para consumo de tokens de IA.
-4. **Modo PRO**: Desbloqueio de recursos avançados e uso de Chave API própria do usuário.
-5. **Backups Diferenciados**: 
-   - **Individual**: Compartilhamento de ficha técnica de um único carro.
-   - **Total**: Backup completo de toda a frota e configurações.
+## 🏗️ Arquitetura e Lógica Principal
+
+### 🛡️ Filosofia LocalFirst
+A privacidade é o pilar central. **Todos os dados de frota, fotos e históricos são armazenados exclusivamente no dispositivo do usuário (`localStorage`)**.
+- **Vantagem**: Funciona sem internet, latência zero e privacidade total.
+- **Integração Cloud**: O Firebase é usado estritamente para o que é global: **Autenticação, Gestão de Créditos IA e Status da Assinatura PRO**.
+
+### 🧠 Inteligência Artificial (Gemini integration)
+O FleetX utiliza modelos de linguagem grande (LLM) para processar conhecimento técnico complexo:
+- **Leitura de Manuais**: Processa PDFs técnicos e extrai especificações de óleo, planos de revisão, tabelas de fusíveis e significados de luzes de painel.
+- **Diagnóstico e Sugestão**: Baseado no histórico de manutenção, a IA sugere intervenções preditivas.
+- **Segurança de Chaves**: Usuários FREE usam créditos da plataforma. Usuários PRO podem inserir sua própria **API Key**, garantindo autonomia infinita.
+
+### 🌎 Adaptabilidade Internacional (Aba Regional)
+O sistema é agnóstico em relação à localização:
+- **Rótulo do Identificador**: Configurável para "Placa" (Brasil), "Matrícula" (Portugal/Espanha), "License Plate" (EUA), etc.
+- **Placeholder de Máscara**: Define o formato visual (Ex: "AAA-0000" vs "ABC 1234").
+- **Multi-Linguagem**: Tradução em tempo real para 9 idiomas (PT, EN, ES, FR, IT, DE, RU, ZH, KO).
 
 ---
 
-## 🛠️ Próximos Passos (Roadmap para VS Code)
-Para consolidar o projeto em um ambiente de desenvolvimento local (VS Code), recomendo focar em:
-1. **Configuração PWA**: Implementar Service Workers para suporte offline completo e "Instalação" no celular.
-2. **Otimização de Imagens**: Implementar compressão no client-side antes de salvar fotos no `localStorage` para evitar exceder o limite de 5MB do navegador (ou migrar para IndexedDB).
-3. **Segurança Firebase**: Revisar as regras do `firestore.rules` (já implantadas, mas sempre bom auditar ao adicionar novos campos).
-4. **Testes Unitários**: Criar suíte de testes para os cálculos de automação de manutenção no diretório `src/utils/calculations.ts`.
+## 📱 Módulos e Funcionalidades
+
+### 1. Central de Veículos (Garagem)
+- **Cadastro**: Coleta de marca, modelo, ano, motorização e quilometragem inicial.
+- **Diferencial**: Interface visual inspirada em painéis de alta tecnologia (High Contrast).
+
+### 2. Manutenção e Protocolo do Mecânico
+- **Categorização**: Divisão por sistemas (Motor, Suspensão, Freios, Elétrica).
+- **Provas Técnicas**: Anexo de fotos de notas fiscais e peças trocadas.
+- **Auditoria**: O sistema gera um índice de confiança baseado na completude dos dados.
+
+### 3. Inteligência de Consumo (Combustível)
+- **Cálculo de Eficiência**: km/L ou L/100km automáticos.
+- **Análise Financeira**: Histórico de preços e variação de custo por quilômetro rodado.
+
+### 4. Catálogo de Peças Personalizado
+- **Inventário**: Permite guardar referências e números de série de peças instaladas, facilitando reposições futuras.
+
+### 5. Manual do Veículo IA
+- **Organização**: Estrutura em "Acordeão" para fácil leitura.
+- **Campos Específicos**: Cronogramas de revisão, Especificações de Fluidos, Fusíveis e Relés, Símbolos do Painel e Notas Técnicas.
 
 ---
 
-## ⚠️ DIRETRIZES DE MANUTENÇÃO (LEITURA OBRIGATÓRIA PARA IA)
-> **Atenção Agente/Copilot/AI**: Você está proibido de realizar alterações estruturais sem consultar os seguintes princípios básicos deste app:
+## 🛠️ Ecossistema de Desenvolvimento (Roadmap Híbrido)
 
-1. **LocalFirst por Padrão**: Nunca mude a lógica de salvar veículos para o Firebase sem que o usuário peça explicitamente. A privacidade é o diferencial deste app.
-2. **Integridade de Créditos**: O consumo de créditos deve sempre passar pelo `consumeCredit()` no `FirebaseContext`. Não simule consumo local.
-3. **Formato de Backup**: Nunca altere a estrutura do JSON de exportação sem atualizar a validação no `SettingsModal.tsx`. Arquivos `.fleetx-backup` devem ser incompatíveis com arquivos de veículos individuais para evitar corrupção de dados.
-4. **Design System**: Mantenha a estética "FleetX" (fontes Mono, bordas arredondadas `2xl/3xl`, e animações de entrada `motion`).
+Agora que o projeto caminha para o desenvolvimento em **VS Code** e geração de **APK no Android Studio**:
+
+1. **Hibridização (Capacitor/Cordova)**:
+   - Utilizar o Capacitor para expor APIs nativas (Câmera, Sistema de Arquivos).
+   - Otimizar o consumo de bateria durante o processamento de imagens.
+2. **Persistence Upgrade (IndexedDB)**:
+   - Migrar do `localStorage` (limite ~5MB) para `IndexedDB` (~Gigas) para suportar centenas de fotos de manutenção em alta definição.
+3. **PWA & Instalação**:
+   - Manter manifestos compatíveis para que o usuário possa usar como Web App enquanto a versão nativa é compilada.
 
 ---
-*Documento gerado e validado em 21 de Maio de 2026.*
+
+## ⚠️ DIRETRIZES DE OURO PARA FUTUROS DESENVOLVEDORES
+1. **Nunca quebre o LocalFirst**: A sincronização forçada com nuvem destruiría a confiança do usuário.
+2. **Preserve a Estética FleetX**: Bordas `3xl`, fontes `JetBrains Mono`, ícones `Lucide` e tons sofisticados.
+3. **Segurança de Créditos**: Toda interação de IA deve validar o saldo via `useFirebase`.
+4. **Respeite o Manual**: O manual em `AppManual.tsx` deve ser a fonte da verdade para o usuário final.
+
+---
+*Documento atualizado em 21 de Maio de 2026 - FleetX Engineering Team.*
+

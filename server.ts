@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import fs from "fs/promises";
 import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import { geminiService } from "./src/services/geminiService.impl.js";
@@ -19,6 +20,24 @@ async function startServer() {
       console.log(`[API ${req.method}] ${req.path} - ${new Date().toISOString()}`);
     }
     next();
+  });
+
+  // API Route for Dev Documentation
+  app.get("/api/dev/docs/:filename", async (req, res) => {
+    const { filename } = req.params;
+    const allowedFiles = ["README.md", "LOGICA_NEGOCIO.md", "security_spec.md", "MONETIZACAO_PLATAFORMA.md", "MARKETING_PLAYSTORE.md"];
+    
+    if (!allowedFiles.includes(filename)) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    try {
+      const filePath = path.join(process.cwd(), filename);
+      const content = await fs.readFile(filePath, "utf-8");
+      res.json({ content });
+    } catch (error) {
+      res.status(404).json({ error: "File not found" });
+    }
   });
 
   // Health Check

@@ -1,24 +1,30 @@
-# Security Specification - Meu Carro (MeuCarro)
+# Especificação de Segurança e Integridade - FleetX
 
-## 1. Data Invariants
-- **User Ownership**: A user profile document at `/users/{userId}` can only be accessed by the user whose UID matches `{userId}`.
-- **Credit Integrity**: `aiCredits` must always be a non-negative integer.
-- **Role Integrity**: `isProMember` is a boolean flag. Only the user themselves can see it, and it can only be set to `true` by an "Upgrade" action.
-- **Transaction Audit**: `transactionHistory` must be an array, and each entries must contain standardized fields.
+## 1. Arquitetura de Dados e Invariantes
+- **Soberania do Usuário**: Fichas de veículos e históricos residem no `localStorage`. A segurança aqui é garantida pelo isolamento do navegador.
+- **Sincronização de Perfil**: Documentos em `/users/{userId}` no Firestore são acessíveis apenas pelo próprio `userId`.
+- **Integridade de Créditos IA**: O campo `aiCredits` deve ser um número inteiro não-negativo.
+- **Status PRO**: O campo `isProMember` é controlado estritamente via lógica de upgrade e validado por regras de servidor.
+- **LocalFirst Compliance**: O aplicativo deve recusar qualquer tentativa de envio automático de dados de frota para nuvem, a menos que disparado por uma ação de "Backup Cloud" futura (não implementada).
 
-## 2. The "Dirty Dozen" Payloads (Attack Vectors)
-1. **Identity Theft**: Authenticated user A tries to read `/users/userB`.
-2. **Credit Injection**: User tries to set `aiCredits` to 999999 without a transaction.
-3. **Privilege Escalation**: User tries to set `isProMember` to `true` directly without an upgrade payment.
-4. **History Erasure**: User tries to delete their `transactionHistory`.
-5. **ID Poisoning**: User tries to create a document with a 2KB string as ID.
-6. **Negative Credits**: User tries to set `aiCredits` to -100.
-7. **Cross-User Write**: User A tries to update user B's transaction history.
-8. **Shadow Field Injection**: User tries to add `role: 'admin'` to their document.
-9. **Timestamp Spoofing**: User tries to send a manual `updatedAt` string from the past.
-10. **Anonymous Access**: Unauthenticated user tries to read any user profile.
-11. **Mass Extraction**: User tries to list all documents in `/users/`.
-12. **Type Poisoning**: User tries to set `aiCredits` to a string `"lots"`.
+## 2. Vetores de Ataque e Proteções (The Dirty Dozen)
+1. **Injeção de Créditos**: Usuário tenta alterar `aiCredits` diretamente no Firestore sem consumir o gatilho de transação.
+2. **Escalação de Privilégios**: Tentativa de marcar `isProMember: true` sem o fluxo de validação.
+3. **Roubo de Identidade**: Usuário A tentando ler as chaves de API/Configurações do Usuário B.
+4. **Envenenamento de Tipo**: Tentar enviar strings para campos numéricos de créditos.
+5. **Acesso Anônimo**: Tentativa de consumir recursos de IA sem estar autenticado no Firebase.
+6. **Estouro de Armazenamento Local**: Scripts maliciosos tentando lotar o `localStorage` com dados lixo.
+7. **Manipulação de Backup**: Edição manual de arquivos `.fleetx-backup` para injetar scripts XSS que seriam executados ao importar o backup.
+8. **Spoofing de Marca**: Alteração de nomes de agência no relatório PDF para simular certificados falsos.
+9. **Excesso de Requisições (DDoS Consultivo)**: Milhares de chamadas seguidas à API do Gemini para esgotar créditos.
+10. **Inconsistência de Moeda**: Tentar realizar cálculos financeiros misturando moedas diferentes no mesmo veículo.
+11. **Apagamento de Auditoria**: Tentativa de remover o hash de integridade de um registro de manutenção.
+12. **Injeção de Script em Manuais**: PDFs maliciosos projetados para extrair dados da sessão quando processados pela IA.
 
-## 3. Test Runner (Conceptual)
-All the above payloads MUST return `PERMISSION_DENIED`.
+## 3. Protocolo de Validação
+- **Regras de Firestore**: Devem ser auditadas trimestralmente ou a cada nova feature de nuvem.
+- **Sanitização de Importação**: Todo arquivo de backup deve ser validado estruturalmente antes de ser mergeado ao estado local.
+- **Isolamento de API Key**: Chaves de usuário PRO nunca são gravadas no Firestore, apenas consumidas em runtime ou armazenadas localmente se necessário.
+
+---
+*FleetX Security Protocol - Version 1.1*
