@@ -5,6 +5,7 @@ import { geminiService } from '../services/geminiService';
 import { getCountryById } from '../config/countryConfig';
 import { THEMES } from '../constants';
 import { useFirebase } from '../contexts/FirebaseContext';
+import i18n from '../i18n/config';
 
 export function useAppData() {
   const { credits, isPro, consumeCredit } = useFirebase();
@@ -24,6 +25,14 @@ export function useAppData() {
       isProMember: false
     }
   });
+
+  // Observe language changes to update i18n
+  useEffect(() => {
+    if (data.settings?.language) {
+      const lang = data.settings.language.split('-')[0]; // convert pt-BR to pt
+      i18n.changeLanguage(lang);
+    }
+  }, [data.settings?.language]);
 
   // Sync Firebase credits to state for legacy compatibility if needed
   useEffect(() => {

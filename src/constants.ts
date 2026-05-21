@@ -6,7 +6,23 @@ export const THEMES = {
   blue: { id: 'blue', name: 'Pacific Blue', primary: '#1e3a8a', accent: '#3b82f6', bg: '#f8fafc' },
   green: { id: 'green', name: 'Emerald Forest', primary: '#064e3b', accent: '#10b981', bg: '#f0fdf4' },
   dark: { id: 'dark', name: 'Carbon Fiber', primary: '#0f172a', accent: '#94a3b8', bg: '#020617' },
-  orange: { id: 'orange', name: 'Grand Prix', primary: '#7c2d12', accent: '#f97316', bg: '#fff7ed' }
+  orange: { id: 'orange', name: 'Grand Prix', primary: '#7c2d12', accent: '#f97316', bg: '#fff7ed' },
+  slate: { id: 'slate', name: 'Slate Professional', primary: '#334155', accent: '#64748b', bg: '#f8fafc' },
+  indigo: { id: 'indigo', name: 'Indigo Corporate', primary: '#312e81', accent: '#4f46e5', bg: '#f5f3ff' },
+  teal: { id: 'teal', name: 'Teal Executive', primary: '#134e4a', accent: '#0d9488', bg: '#f0fdfa' },
+  royal: { id: 'royal', name: 'Royal Service', primary: '#4c1d95', accent: '#7c3aed', bg: '#f5f3ff' },
+  bordeaux: { id: 'bordeaux', name: 'Bordeaux Luxury', primary: '#450a0a', accent: '#991b1b', bg: '#fef2f2' },
+  noir: { id: 'noir', name: 'Midnight Noir', primary: '#020617', accent: '#1e293b', bg: '#000000' },
+  silver: { id: 'silver', name: 'Silver Precision', primary: '#1f2937', accent: '#9ca3af', bg: '#f3f4f6' },
+  espresso: { id: 'espresso', name: 'Espresso Roast', primary: '#422006', accent: '#92400e', bg: '#fffbeb' },
+  forest: { id: 'forest', name: 'Forest Deep', primary: '#064e3b', accent: '#22c55e', bg: '#f0fdf4' },
+  nordic: { id: 'nordic', name: 'Nordic Minimalism', primary: '#0f172a', accent: '#38bdf8', bg: '#f0f9ff' },
+  berry: { id: 'berry', name: 'Berry Elite', primary: '#701a75', accent: '#d946ef', bg: '#fdf4ff' },
+  graphite: { id: 'graphite', name: 'Graphite Tech', primary: '#111827', accent: '#374151', bg: '#f9fafb' },
+  oceanic: { id: 'oceanic', name: 'Oceanic Blue', primary: '#083344', accent: '#0e7490', bg: '#ecfeff' },
+  sage: { id: 'sage', name: 'Sage Heritage', primary: '#166534', accent: '#15803d', bg: '#f0fdf4' },
+  gold: { id: 'gold', name: 'Golden Essence', primary: '#713f12', accent: '#ca8a04', bg: '#fefce8' },
+  steel: { id: 'steel', name: 'Steel Industrial', primary: '#374151', accent: '#6b7280', bg: '#f9fafb' }
 } as const;
 
 export const DEFAULT_SEARCH_LINKS: VehicleSearchLink[] = [

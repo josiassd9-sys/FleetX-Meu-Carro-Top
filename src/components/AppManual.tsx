@@ -91,10 +91,55 @@ export const AppManual: React.FC = () => {
   return (
     <div className="bg-white rounded-2xl sm:rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm">
       <ManualItem
-        title="Guia de Início Rápido (Step-by-Step)"
-        icon={<Sparkles size={20} />}
+        title="Configurações Regionais: Adaptabilidade Internacional"
+        icon={<Globe size={20} />}
         isOpen={openIndex === 0}
         onToggle={() => toggleIndex(0)}
+      >
+        <div className="space-y-4">
+          <p>O FleetX foi projetado para ser um cidadão do mundo. Na aba <strong>Regional</strong> das configurações, você define como o aplicativo deve se comportar visualmente e tecnicamente de acordo com o seu país:</p>
+          
+          <div className="bg-blue-50 p-5 rounded-xl border border-blue-100 space-y-3">
+            <div>
+              <h4 className="font-black text-blue-900 uppercase text-[10px] mb-1 tracking-widest">Rótulo do Identificador (Terminologia Local)</h4>
+              <p className="text-[11px] text-blue-800/80">Este campo define como o app se refere à identificação principal do veículo. No <strong>Brasil</strong>, usamos "Placa", mas em <strong>Portugal</strong> ou <strong>Espanha</strong>, o termo correto é "Matrícula". Ao alterar este rótulo, todos os formulários e relatórios do sistema serão atualizados automaticamente.</p>
+            </div>
+            
+            <div className="pt-2 border-t border-blue-200/50">
+              <h4 className="font-black text-blue-900 uppercase text-[10px] mb-1 tracking-widest">Placeholder (Máscara de Visualização)</h4>
+              <p className="text-[11px] text-blue-800/80">O "Placeholder" é o texto de fundo que aparece nos campos de entrada (efeito fantasma) para orientar o usuário. No Brasil, onde as placas têm 7 dígitos (padrão Mercosul ou antigo), usamos "AAA-0000" como guia. Em países com formatos diferentes, você pode definir um exemplo que faça sentido para sua região (ex: "ABC 12345" ou "12-AA-34").</p>
+            </div>
+          </div>
+
+          <ul className="list-disc ml-6 space-y-2">
+            <li><strong>Idiomas Suportados:</strong> O FleetX agora fala 9 idiomas: Português, Inglês, Espanhol, Francês, Italiano, Alemão, Russo, Chinês e Coreano.</li>
+            <li><strong>Símbolo Monetário e Regional:</strong> Customize a moeda (R$, €, $, etc.), o nome da sua agência/empresa e até a Referência de Mercado (Ex: Tabela FIPE ou KBB).</li>
+          </ul>
+          
+          <p className="text-[11px] italic font-bold text-gray-400">Essa flexibilidade permite que gestores de frota em qualquer continente utilizem o FleetX com a mesma precisão técnica e cultural.</p>
+        </div>
+      </ManualItem>
+
+      <ManualItem
+        title="Identidade Visual e Estilo Profissional"
+        icon={<Settings size={20} />}
+        isOpen={openIndex === 1}
+        onToggle={() => toggleIndex(1)}
+      >
+        <div className="space-y-4">
+          <p>O FleetX permite que você adeque a ferramenta à sua marca ou preferência pessoal com alto nível de sofisticação:</p>
+          <ul className="list-disc ml-6 space-y-2">
+            <li><strong>20+ Paletas de Cores:</strong> Escolha entre temas como "Slate Professional", "Bordeaux Luxury", "Nordic Minimalism" ou "Graphite Tech". São tons selecionados para passar autoridade e clareza.</li>
+            <li><strong>Nova Identidade Visual:</strong> O ícone oficial (Vetor de Pickup Tech) agora estampa o cabeçalho e relatórios, garantindo um visual moderno de "Fleet Management" de última geração.</li>
+          </ul>
+        </div>
+      </ManualItem>
+
+      <ManualItem
+        title="Guia de Início Rápido (Step-by-Step)"
+        icon={<Sparkles size={20} />}
+        isOpen={openIndex === 2}
+        onToggle={() => toggleIndex(2)}
       >
         <div className="space-y-6">
           <div>
@@ -114,8 +159,8 @@ export const AppManual: React.FC = () => {
       <ManualItem
         title="Protocolo do Mecânico: Do Recebimento à Entrega"
         icon={<UserCog size={20} />}
-        isOpen={openIndex === 1}
-        onToggle={() => toggleIndex(1)}
+        isOpen={openIndex === 3}
+        onToggle={() => toggleIndex(3)}
       >
         <p>Este é o fluxo de trabalho ideal para profissionais que buscam transparência:</p>
         <div className="space-y-4">
@@ -137,8 +182,8 @@ export const AppManual: React.FC = () => {
       <ManualItem
         title="Auditoria: Integridade do Documento"
         icon={<ShieldCheck size={20} />}
-        isOpen={openIndex === 2}
-        onToggle={() => toggleIndex(2)}
+        isOpen={openIndex === 4}
+        onToggle={() => toggleIndex(4)}
       >
         <p>Um histórico de manutenção só vale dinheiro se for íntegro. No FleetX, cada registro é "auditado" por tecnologia invisível:</p>
         <ul className="list-disc ml-6 space-y-2">
@@ -151,8 +196,8 @@ export const AppManual: React.FC = () => {
       <ManualItem
         title="Benefícios da Relação Dono x Mecânico"
         icon={<TrendingUp size={20} />}
-        isOpen={openIndex === 3}
-        onToggle={() => toggleIndex(3)}
+        isOpen={openIndex === 5}
+        onToggle={() => toggleIndex(5)}
       >
         <p>Por que usar este ecossistema em vez de papel e caneta?</p>
         <ul className="list-disc ml-6 space-y-3">
@@ -166,8 +211,8 @@ export const AppManual: React.FC = () => {
       <ManualItem
         title="Continuidade Técnica: O Legado para Futuros Mecânicos"
         icon={<History size={20} />}
-        isOpen={openIndex === 4}
-        onToggle={() => toggleIndex(4)}
+        isOpen={openIndex === 6}
+        onToggle={() => toggleIndex(6)}
       >
         <p>O FleetX foi projetado para que o conhecimento sobre o carro nunca se perca, independentemente de quantas vezes você trocar de oficina.</p>
         <ul className="list-disc ml-6 space-y-3">
@@ -180,8 +225,8 @@ export const AppManual: React.FC = () => {
       <ManualItem
         title="Agenda Preditiva: A Inteligência do Futuro"
         icon={<CalendarClock size={20} />}
-        isOpen={openIndex === 5}
-        onToggle={() => toggleIndex(5)}
+        isOpen={openIndex === 7}
+        onToggle={() => toggleIndex(7)}
       >
         <p>Como o FleetX sabe quando você deve ir à oficina?</p>
         <ul className="list-disc ml-6 space-y-2">
@@ -194,8 +239,8 @@ export const AppManual: React.FC = () => {
       <ManualItem
         title="Inteligência de Consumo"
         icon={<Fuel size={20} />}
-        isOpen={openIndex === 6}
-        onToggle={() => toggleIndex(6)}
+        isOpen={openIndex === 8}
+        onToggle={() => toggleIndex(8)}
       >
         <p>Análise profunda de eficiência energética e gastos operacionais.</p>
         <ul className="list-disc ml-6 space-y-2">
@@ -206,24 +251,24 @@ export const AppManual: React.FC = () => {
       </ManualItem>
 
       <ManualItem
-        title="Relatório Técnico e Manual IA"
+        title="Relatório Técnico Consolidado"
         icon={<FileText size={20} />}
-        isOpen={openIndex === 7}
-        onToggle={() => toggleIndex(7)}
+        isOpen={openIndex === 9}
+        onToggle={() => toggleIndex(9)}
       >
         <p>Transforme dados brutos em documentos profissionais e inteligência imediata.</p>
         <ul className="list-disc ml-6 space-y-2">
-          <li><strong>Manual Digital do Veículo:</strong> Nossa IA processa o manual do fabricante e responde dúvidas técnicas sobre pressão de pneus, tipos de fluidos e capacidades.</li>
           <li><strong>Relatório para Venda:</strong> Gere um PDF elegante com todo o histórico de manutenção, valorizando o veículo na hora da negociação.</li>
           <li><strong>Auditoria e Alertas:</strong> Relatório consolidado de todas as inconsistências e itens pendentes de atenção.</li>
+          <li><strong>Identidade da Sua Agência:</strong> Seus relatórios agora exibem o nome personalizado da sua agência definido nas configurações.</li>
         </ul>
       </ManualItem>
 
       <ManualItem
         title="Estratégia de Negócio e Gestão de Frota"
         icon={<TrendingUp size={20} />}
-        isOpen={openIndex === 8}
-        onToggle={() => toggleIndex(8)}
+        isOpen={openIndex === 10}
+        onToggle={() => toggleIndex(10)}
       >
         <p>Para lojistas e colecionadores, o FleetX atua como um ERP automotivo simplificado:</p>
         <div className="space-y-4">
@@ -246,39 +291,25 @@ export const AppManual: React.FC = () => {
       </ManualItem>
 
       <ManualItem
-        title="Manual do Veículo IA"
+        title="Manual do Veículo IA: Extração Profissional"
         icon={<Sparkles size={20} />}
-        isOpen={openIndex === 9}
-        onToggle={() => toggleIndex(9)}
+        isOpen={openIndex === 11}
+        onToggle={() => toggleIndex(11)}
       >
-        <p>A tecnologia de leitura de manuais via IA permite que você tire dúvidas técnicas instantâneas sobre qualquer PDF anexado ao veículo.</p>
+        <p>Nossa IA de leitura de manuais foi atualizada para fornecer uma experiência de consultoria técnica completa, organizada e visual:</p>
         <ul className="list-disc ml-6 space-y-2">
-          <li><strong>Consultas Técnicas:</strong> Pergunte "Qual a pressão dos pneus com carga total?" e a IA lerá o manual original para te responder.</li>
-          <li><strong>Especificações de Fluidos:</strong> Identifique rapidamente o tipo exato de óleo, fluido de freio ou líquido de arrefecimento recomendado.</li>
-          <li><strong>Planos de Revisão:</strong> A IA extrai as tabelas de revisão do fabricante para alimentar sua Agenda Preditiva automaticamente.</li>
-        </ul>
-      </ManualItem>
-
-      <ManualItem
-        title="Configurações Regionais: Identidade do App"
-        icon={<Globe size={20} />}
-        isOpen={openIndex === 10}
-        onToggle={() => toggleIndex(10)}
-      >
-        <p>Ajuste o FleetX para falar a sua língua e usar a sua moeda. Na aba <strong>Regional</strong> das configurações, você define a base operacional do sistema:</p>
-        <ul className="list-disc ml-6 space-y-2">
-          <li><strong>Idioma do Sistema:</strong> Altera todos os rótulos e comandos do aplicativo. Ideal para usuários em diferentes países.</li>
-          <li><strong>Símbolo Monetário:</strong> Defina se seus relatórios devem exibir <strong>R$</strong>, <strong>€</strong>, <strong>$</strong> ou qualquer outra moeda.</li>
-          <li><strong>Rótulo de Identificação:</strong> Mude o termo principal de identificação do veículo. <br/>
-          <em>Exemplo:</em> No Brasil usamos "Placa", em Portugal usa-se "Matrícula". Basta alterar aqui e todo o app se adapta.</li>
+          <li><strong>Estrutura em Acordeão:</strong> As informações são organizadas em abas como "Cronograma de Manutenção", "Notas Técnicas", "Especificações" e "Transcrição Completa".</li>
+          <li><strong>Fusíveis e Símbolos do Painel:</strong> Agora a IA identifica e lista automaticamente a caixa de fusíveis e o significado de cada luz espia do painel.</li>
+          <li><strong>Sistema de Notas e Legendas:</strong> O FleetX detecta condições repetitivas (Ex: "Somente para veículos turbo*") e organiza essas legendas em uma seção dedicada, evitando poluição visual.</li>
+          <li><strong>Especificações de Fluidos:</strong> Identifique rapidamente o tipo exato de óleo, fluido de freio ou líquido de arrefecimento recomendado com precisão cirúrgica.</li>
         </ul>
       </ManualItem>
 
       <ManualItem
         title="Robô de Busca: Customização de Pesquisa"
         icon={<Link2 size={20} />}
-        isOpen={openIndex === 11}
-        onToggle={() => toggleIndex(11)}
+        isOpen={openIndex === 12}
+        onToggle={() => toggleIndex(12)}
       >
         <p>O <strong>Robô</strong> é o seu assistente de pesquisa externa. Na aba correspondente, você pode ensinar ao FleetX onde buscar informações sobre seus veículos:</p>
         <ul className="list-disc ml-6 space-y-2">
@@ -291,8 +322,8 @@ export const AppManual: React.FC = () => {
       <ManualItem
         title="Inteligência Artificial: Configuração de Chave"
         icon={<Key size={20} />}
-        isOpen={openIndex === 12}
-        onToggle={() => toggleIndex(12)}
+        isOpen={openIndex === 13}
+        onToggle={() => toggleIndex(13)}
       >
         <p>O cérebro do FleetX depende de uma conexão com o <strong>Gemini (Google)</strong>. Veja como configurar:</p>
         <div className="space-y-4">
@@ -310,8 +341,8 @@ export const AppManual: React.FC = () => {
       <ManualItem
         title="Segurança, Backup e Privacidade"
         icon={<ShieldCheck size={20} />}
-        isOpen={openIndex === 13}
-        onToggle={() => toggleIndex(13)}
+        isOpen={openIndex === 14}
+        onToggle={() => toggleIndex(14)}
       >
         <p>Seus dados são sagrados e estão sob seu total controle.</p>
         <ul className="list-disc ml-6 space-y-2">

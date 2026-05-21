@@ -23,9 +23,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       <div className="flex items-center gap-4">
         <motion.div 
           whileHover={{ rotate: 10, scale: 1.1 }}
-          className="bg-brand-accent p-3 rounded-2xl shadow-lg shadow-brand-accent/20 glow-accent shrink-0"
+          className="bg-white p-2 rounded-2xl shadow-lg shadow-gray-200/50 shrink-0 border border-gray-100"
         >
-          <HeaderLogo iconName={data.settings?.appIcon} className="text-white" />
+          <img 
+            src="/src/assets/images/fleetx_final_logo_1779384389550.png" 
+            alt="FleetX Logo" 
+            className="w-10 h-10 object-contain"
+          />
         </motion.div>
         <div>
           <div className="flex items-center gap-2 mb-0.5">

@@ -961,8 +961,15 @@ export const geminiService = {
   // ==================== OUTRAS FUNÇÕES (mantidas e melhoradas) ====================
   getVehicleManualInfo: async (vehicleModel: string): Promise<string> => {
     try {
-      const prompt = `Gere um resumo técnico detalhado do manual do proprietário para o veículo "${vehicleModel}". 
-        Inclua: especificações de fluidos, pressões de pneus, torques e intervalos de manutenção. Use Markdown.`;
+      const prompt = `Gere um guia técnico completo e estruturado baseado no manual do proprietário para o veículo "${vehicleModel}". 
+        
+        INSTRUÇÕES DE ORGANIZAÇÃO:
+        1. SEÇÃO DE FLUIDOS: Liste tipos de óleo (viscosidade/especificação), capacidades e fluidos de arrefecimento/freio.
+        2. CRONOGRAMA POR KM: Crie uma tabela ou lista clara de manutenções de zero até 200 mil km (ou o limite do fabricante).
+        3. LEGENDA DE NOTAS (*): Identifique condições repetitivas (como uso severo, estradas de terra, reboque, trânsito pesado). Descreva-as uma única vez em uma seção de "Notas Importantes" e use marcadores (*, **, ***) nos itens da tabela que exigem atenção especial.
+        
+        OBJETIVO: O guia deve ser conciso e evitar a repetição da mesma frase de "condição especial" em cada linha.
+        Use Markdown profissional.`;
 
       return await geminiService.callAI(prompt);
     } catch (error) {
@@ -978,12 +985,21 @@ export const geminiService = {
 
       // Extrator de Cronograma
       const schedulePrompt = `Analise este manual do veículo "${vehicleModel}" e extraia a TABELA DE MANUTENÇÃO PROGRAMADA.
+
+        INSTRUÇÃO DE OTIMIZAÇÃO DE REPETIÇÕES: 
+        Identifique termos ou frases longas repetitivas como "Condição especial (*)", avisos sobre uso severo, estradas poeirentas, etc., que aparecem em vários itens.
+        Extraia essas descrições longas e repetidas para um objeto central chamado 'technicalNotes' usando marcadores como "*", "**", etc.
+        Nos itens individuais da lista 'items', mantenha apenas o nome da peça/ação e anexe o marcador correspondente (ex: "Troca de Óleo (*)"). Isso evita poluição visual.
+
         Retorne um JSON com o seguinte formato:
         {
           "maintenanceSchedule": [
-            {"mileage": 10000, "items": ["óleo do motor", "filtro de óleo"], "description": "Primeira revisão"},
-            {"mileage": 20000, "items": ["inspeção geral"], "description": ""}
-          ]
+            {"mileage": 10000, "items": ["Óleo do motor (*)", "Filtro de combustível (*)"], "description": "Revisão sugerida pelo manual"}
+          ],
+          "technicalNotes": {
+            "*": "Texto completo da condição especial que se repetia no manual (ex: uso em estradas poeirentas ou severas)",
+            "**": "Outra nota ou condição identificada"
+          }
         }`;
 
       const scheduleResponse = await ai.models.generateContent({
@@ -998,9 +1014,24 @@ export const geminiService = {
       const scheduleData = parseAIJson<any>(scheduleResponse.text || '');
 
       // Extrator de Seções Técnicas
-      const techPrompt = `Analise este manual do veículo "${vehicleModel}" e extraia seções técnicas importantes como:
-        Pneus, Óleo, Bateria, Capacidades, Filtros.
-        Retorne um JSON com campos como tirePressure, oilSpecification, batteryInfo, fluidsCapacities, filters.`;
+    const techPrompt = `Analise este manual do veículo "${vehicleModel}" e extraia seções técnicas importantes como:
+      Pneus, Óleo, Bateria, Capacidades, Filtros, FUSES/FUSÍVEIS e SÍMBOLOS DO PAINEL.
+      Aplique a mesma lógica de 'technicalNotes' se houver avisos repetitivos nessas seções.
+      Retorne um JSON com:
+      {
+        "technicalSections": {
+          "tirePressure": "string",
+          "oilSpecification": "string",
+          "batteryInfo": "string",
+          "fluidsCapacities": "string",
+          "filters": "string",
+          "fuses": "Identificação de fusíveis e relés (tabela ou lista)",
+          "dashboardSymbols": "Significado das luzes de advertência do painel"
+        },
+        "technicalNotes": {
+          "marker": "description"
+        }
+      }`;
 
       const techResponse = await ai.models.generateContent({
         model: "gemini-2.0-flash",
@@ -1011,7 +1042,14 @@ export const geminiService = {
         config: { responseMimeType: "application/json" }
       });
 
-      const technicalSections = parseAIJson<any>(techResponse.text || '') || {};
+      const technicalSectionsData = parseAIJson<any>(techResponse.text || '') || {};
+      const technicalSections = technicalSectionsData.technicalSections || technicalSectionsData;
+
+      // Mesclar notas técnicas de ambas as chamadas
+      const technicalNotes = {
+        ...(scheduleData?.technicalNotes || {}),
+        ...(technicalSectionsData?.technicalNotes || {})
+      };
 
       // Texto Completo (Resumo)
       const fullTextResponse = await ai.models.generateContent({
@@ -1027,6 +1065,7 @@ export const geminiService = {
       return {
         maintenanceSchedule: scheduleData?.maintenanceSchedule || [],
         technicalSections,
+        technicalNotes,
         fullText
       };
     });

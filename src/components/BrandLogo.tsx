@@ -12,8 +12,8 @@ export const BrandLogo = ({ vehicleName, brandLogoUrl, className }: BrandLogoPro
 
   if (!logo) {
     return (
-      <div className={`flex items-center justify-center bg-gray-50 text-gray-300 font-black text-[10px] italic ${className}`}>
-        {vehicleName?.substring(0, 2).toUpperCase()}
+      <div className={`flex items-center justify-center bg-gray-50 text-brand-primary rounded-lg ${className}`}>
+        <img src="/src/assets/images/fleetx_final_logo_1779384389550.png" alt="FleetX Logo" className="w-full h-full object-contain p-2" />
       </div>
     );
   }

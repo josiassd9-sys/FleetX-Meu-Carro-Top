@@ -117,7 +117,7 @@ export const VehicleDetailHeader: React.FC<VehicleDetailHeaderProps> = ({
   marketRef
 }) => {
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 relative overflow-hidden w-full">
       {/* Breadcrumbs / Back and Actions Area */}
       <div className="flex flex-col gap-4 mb-6 px-2">
         {/* Linha 1: Navegação e Gestão (Export/Settings) */}

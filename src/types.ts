@@ -144,9 +144,12 @@ export interface VehicleManual {
     batteryInfo?: string;
     filterInfo?: string;
     fluidsCapacities?: string;
+    fuses?: string;
+    dashboardSymbols?: string;
     [key: string]: string | undefined;
   };
   fullText: string;
+  technicalNotes?: { [marker: string]: string };
   rawSections: {
     [sectionName: string]: string;
   };
@@ -188,10 +191,10 @@ export interface AppData {
     agencyName?: string;
     vehicleIdentifierLabel?: string; // Default: 'Placa'
     vehicleIdentifierPlaceholder?: string; // Default: 'AAA-0000'
-    theme?: 'default' | 'blue' | 'green' | 'dark' | 'orange';
+    theme?: 'default' | 'blue' | 'green' | 'dark' | 'orange' | 'slate' | 'indigo' | 'teal' | 'royal' | 'bordeaux' | 'noir' | 'silver' | 'espresso' | 'forest' | 'nordic' | 'berry' | 'graphite' | 'oceanic' | 'sage' | 'gold' | 'steel';
     appIcon?: string;
     searchLinks?: VehicleSearchLink[];
-    language: 'pt-BR' | 'en-US' | 'es-ES';
+    language: 'pt-BR' | 'en-US' | 'es-ES' | 'fr-FR' | 'it-IT' | 'de-DE' | 'ru-RU' | 'zh-CN' | 'ko-KR';
     currency: 'BRL' | 'USD' | 'EUR';
     distanceUnit: 'km' | 'mi';
     fuelUnit: 'L' | 'gal';
