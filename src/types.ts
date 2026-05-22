@@ -191,7 +191,26 @@ export interface AppData {
     agencyName?: string;
     vehicleIdentifierLabel?: string; // Default: 'Placa'
     vehicleIdentifierPlaceholder?: string; // Default: 'AAA-0000'
-    theme?: 'default' | 'blue' | 'green' | 'dark' | 'orange' | 'slate' | 'indigo' | 'teal' | 'royal' | 'bordeaux' | 'noir' | 'silver' | 'espresso' | 'forest' | 'nordic' | 'berry' | 'graphite' | 'oceanic' | 'sage' | 'gold' | 'steel';
+    theme?: 'default' | 'blue' | 'green' | 'dark' | 'orange' | 'slate' | 'indigo' | 'teal' | 'royal' | 'bordeaux' | 'noir' | 'silver' | 'espresso' | 'forest' | 'nordic' | 'berry' | 'graphite' | 'oceanic' | 'sage' | 'gold' | 'steel' | 'custom';
+    customThemeColors?: {
+      primary: string;
+      accent: string;
+      bg: string;
+      cardBg: string;
+      textPrimary: string;
+      textSecondary: string;
+      buttonBg: string;
+      buttonText: string;
+    };
+    headerConfig?: {
+      iconScale: number;
+      bannerHeight: number;
+      bgColor?: string;
+      bgImage?: string;
+      bgOpacity: number;
+      bgBlur: number;
+      showIcon: boolean;
+    };
     appIcon?: string;
     searchLinks?: VehicleSearchLink[];
     language: 'pt-BR' | 'en-US' | 'es-ES' | 'fr-FR' | 'it-IT' | 'de-DE' | 'ru-RU' | 'zh-CN' | 'ko-KR';

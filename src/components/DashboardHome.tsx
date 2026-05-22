@@ -60,29 +60,29 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-wrap md:flex-nowrap items-center gap-2 mb-2 pb-2 border-b border-gray-100"
       >
-        <div className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-white rounded border border-gray-50 shadow-sm min-w-[140px]">
+        <div className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-card-bg rounded border border-gray-50 shadow-sm min-w-[140px]">
           <Car size={14} className="text-brand-accent" />
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mr-1">Frota</span>
-          <span className="text-sm font-black text-brand-primary">{data.vehicles?.length || 0}</span>
+          <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mr-1">Frota</span>
+          <span className="text-sm font-black text-text-primary">{data.vehicles?.length || 0}</span>
         </div>
 
-        <div className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-white rounded border border-gray-50 shadow-sm min-w-[140px]">
+        <div className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-card-bg rounded border border-gray-50 shadow-sm min-w-[140px]">
           <Activity size={14} className="text-green-500" />
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mr-1">Saúde</span>
+          <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mr-1">Saúde</span>
           <span className="text-sm font-black text-green-600">Excelente</span>
         </div>
         
-        <div className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-white rounded border border-gray-50 shadow-sm min-w-[140px]">
+        <div className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-card-bg rounded border border-gray-50 shadow-sm min-w-[140px]">
           <Box size={14} className="text-brand-accent" />
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mr-1">Peças</span>
-          <span className="text-sm font-black text-brand-primary">
+          <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mr-1">Peças</span>
+          <span className="text-sm font-black text-text-primary">
             {(data.vehicles || []).reduce((acc, v) => acc + (v.parts?.length || 0), 0)}
           </span>
         </div>
 
-        <div className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-white rounded border border-gray-50 shadow-sm min-w-[140px]">
+        <div className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-card-bg rounded border border-gray-50 shadow-sm min-w-[140px]">
           <Shield size={14} className="text-blue-500" />
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mr-1">Dados</span>
+          <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mr-1">Dados</span>
           <span className="text-sm font-black text-blue-600">Protegidos</span>
         </div>
       </motion.div>
@@ -108,7 +108,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
               transition: { duration: 0.3 }
             }}
             onClick={() => onSelectVehicle(vehicle)}
-            className="group relative glass-card p-4 cursor-pointer overflow-hidden"
+            className="group relative bg-card-bg border border-zinc-100 rounded-xl p-4 cursor-pointer overflow-hidden shadow-sm hover:shadow-xl transition-all"
           >
             <div className="flex flex-col items-center">
               <div className="text-center w-full mb-2">
@@ -118,9 +118,9 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                     brandLogoUrl={vehicle.brandLogoUrl}
                     className="w-10 h-10 rounded shadow-sm"
                   />
-                  <h3 className="text-lg font-black text-brand-primary tracking-tight leading-none">{vehicle.name}</h3>
+                  <h3 className="text-lg font-black text-text-primary tracking-tight leading-none">{vehicle.name}</h3>
                 </div>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest line-clamp-1">{vehicle.model} • {vehicle.year}</p>
+                <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest line-clamp-1">{vehicle.model} • {vehicle.year}</p>
               </div>
 
               <div className="relative w-full mb-2 group-hover:scale-[1.02] transition-transform duration-500">
@@ -135,11 +135,11 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({
                 <div className="relative flex items-center justify-center gap-4 pt-2 border-t border-gray-50">
                   <div className="flex items-center gap-1.5">
                     <Gauge size={14} className="text-brand-accent" />
-                    <span className="text-xs font-mono font-bold text-gray-700">{formatDistance(vehicle.mileage)}</span>
+                    <span className="text-xs font-mono font-bold text-text-primary">{formatDistance(vehicle.mileage)}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Box size={14} className="text-brand-accent" />
-                    <span className="text-xs font-mono font-bold text-gray-700">{(vehicle.parts?.length || 0)} itens</span>
+                    <span className="text-xs font-mono font-bold text-text-primary">{(vehicle.parts?.length || 0)} itens</span>
                   </div>
                   {vehicle.fipeValue && (
                     <div className="flex items-center gap-1 bg-green-50 px-2 py-0.5 rounded text-[10px] font-black text-green-600">

@@ -77,6 +77,7 @@ export function useAppData() {
     if (vehicles.length === 0) {
       vehicles = [{
         id: 'simulated-strada-2024',
+        createdAt: new Date().toISOString(),
         name: 'Fiat',
         model: 'Strada Ultra Turbo',
         year: '2024',
@@ -88,9 +89,9 @@ export function useAppData() {
         healthScore: 98,
         fipeValue: 132000,
         parts: [
-          { id: 'p1', name: 'Óleo Selènia 5W30', status: 'healthy', installMileage: 0, lifeExpectancy: 10000, category: 'Motor', price: 350 },
-          { id: 'p2', name: 'Filtro de Óleo OEM', status: 'healthy', installMileage: 0, lifeExpectancy: 10000, category: 'Motor', price: 85 },
-          { id: 'p3', name: 'Pastilhas de Freio', status: 'healthy', installMileage: 0, lifeExpectancy: 35000, category: 'Freios', price: 420 },
+          { id: 'p1', name: 'Óleo Selènia 5W30', status: 'ok', installedAtMileage: 0, expectedLifeMileage: 10000, category: 'Motor', estimatedPrice: 350, description: 'Sintético' },
+          { id: 'p2', name: 'Filtro de Óleo OEM', status: 'ok', installedAtMileage: 0, expectedLifeMileage: 10000, category: 'Motor', estimatedPrice: 85, description: 'Original' },
+          { id: 'p3', name: 'Pastilhas de Freio', status: 'ok', installedAtMileage: 0, expectedLifeMileage: 35000, category: 'Freios', estimatedPrice: 420, description: 'Semimetálica' },
         ],
         services: [],
         fuelLogs: [],
@@ -109,6 +110,14 @@ export function useAppData() {
         fuelUnit: 'L',
         region: 'Brasil',
         marketReferenceName: 'Tabela FIPE',
+        headerConfig: {
+          iconScale: 100,
+          bannerHeight: 180,
+          bgOpacity: 1,
+          bgBlur: 0,
+          showIcon: true,
+          bgColor: '#141414'
+        },
         ...(loadedData.settings || {})
       }
     };
@@ -129,8 +138,29 @@ export function useAppData() {
   }, []);
 
   useEffect(() => {
-    const theme = THEMES[(data.settings?.theme as keyof typeof THEMES) || 'default'];
-    if (!theme) return;
+    const themeKey = data.settings?.theme || 'default';
+    const theme = THEMES[themeKey as keyof typeof THEMES];
+    const customColors = data.settings?.customThemeColors;
+
+    const colors = {
+      primary: themeKey === 'custom' && customColors ? customColors.primary : (theme?.primary || '#141414'),
+      accent: themeKey === 'custom' && customColors ? customColors.accent : (theme?.accent || '#E11D48'),
+      bg: themeKey === 'custom' && customColors ? customColors.bg : (theme?.bg || '#F8F9FA'),
+      cardBg: themeKey === 'custom' && customColors ? customColors.cardBg : '#FFFFFF',
+      textPrimary: themeKey === 'custom' && customColors ? customColors.textPrimary : '#000000',
+      textSecondary: themeKey === 'custom' && customColors ? customColors.textSecondary : '#6B7280',
+      buttonBg: themeKey === 'custom' && customColors ? customColors.buttonBg : (theme?.accent || '#E11D48'),
+      buttonText: themeKey === 'custom' && customColors ? customColors.buttonText : '#FFFFFF',
+    };
+
+    const header = data.settings?.headerConfig || {
+      iconScale: 100,
+      bannerHeight: 180,
+      bgOpacity: 1,
+      bgBlur: 0,
+      showIcon: true,
+      bgColor: colors.primary
+    };
 
     const styleId = 'theme-overrides';
     let styleTag = document.getElementById(styleId);
@@ -143,12 +173,24 @@ export function useAppData() {
 
     styleTag.innerHTML = `
       :root {
-        --color-brand-primary: ${theme.primary};
-        --color-brand-accent: ${theme.accent};
-        --color-brand-bg: ${theme.bg};
+        --color-brand-primary: ${colors.primary};
+        --color-brand-accent: ${colors.accent};
+        --color-brand-bg: ${colors.bg};
+        --color-card-bg: ${colors.cardBg};
+        --color-text-primary: ${colors.textPrimary};
+        --color-text-secondary: ${colors.textSecondary};
+        --color-button-bg: ${colors.buttonBg};
+        --color-button-text: ${colors.buttonText};
+        
+        --header-height: ${header.bannerHeight}px;
+        --header-icon-scale: ${header.iconScale / 100};
+        --header-bg-opacity: ${header.bgOpacity};
+        --header-bg-blur: ${header.bgBlur}px;
+        --header-bg-color: ${header.bgColor || colors.primary};
+        --header-bg-image: ${header.bgImage ? `url("${header.bgImage}")` : 'none'};
       }
     `;
-  }, [data.settings?.theme]);
+  }, [data.settings?.theme, data.settings?.customThemeColors, data.settings?.headerConfig]);
 
   const handleSave = (newData: AppData) => {
     setData(newData);

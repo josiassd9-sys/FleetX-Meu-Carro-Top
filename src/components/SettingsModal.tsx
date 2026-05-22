@@ -25,7 +25,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onResetData
 }) => {
   const { user, loading, login, logout, credits, isPro, addCredits, upgradeToPro } = useFirebase();
-  const [activeSubTab, setActiveSubTab] = React.useState<'general' | 'theme' | 'search' | 'privacy' | 'manual' | 'apiKey' | 'wallet' | 'account' | 'data' | 'devDocs'>('manual');
+  const [activeSubTab, setActiveSubTab] = React.useState<'general' | 'theme' | 'appearance' | 'search' | 'privacy' | 'manual' | 'apiKey' | 'wallet' | 'account' | 'data' | 'devDocs'>('manual');
   const [testStatus, setTestStatus] = React.useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = React.useState('');
 
@@ -155,6 +155,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     className={`flex items-center gap-1.5 sm:gap-3 px-3 py-2.5 sm:p-4 rounded-lg text-[9px] sm:text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap sm:whitespace-normal flex-1 sm:flex-none justify-center sm:justify-start ${activeSubTab === 'theme' ? 'bg-brand-primary text-white shadow-lg shadow-brand-primary/25' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}`}
                   >
                     <Palette size={14} className="sm:w-4 sm:h-4 shrink-0" /> Estilo
+                  </button>
+                  <button 
+                    onClick={() => setActiveSubTab('appearance')}
+                    className={`flex items-center gap-1.5 sm:gap-3 px-3 py-2.5 sm:p-4 rounded-lg text-[9px] sm:text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap sm:whitespace-normal flex-1 sm:flex-none justify-center sm:justify-start ${activeSubTab === 'appearance' ? 'bg-brand-primary text-white shadow-lg shadow-brand-primary/25' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}`}
+                  >
+                    <Settings size={14} className="sm:w-4 sm:h-4 shrink-0" /> Banner
                   </button>
                   <button 
                     onClick={() => setActiveSubTab('search')}
@@ -321,33 +327,352 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   {activeSubTab === 'theme' && (
                     <div className="space-y-8">
                        <div>
-                         <h3 className="text-sm font-black uppercase tracking-widest text-brand-primary mb-4">Paleta de Cores do Sistema</h3>
-                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                         <h3 className="text-sm font-black uppercase tracking-widest text-brand-primary mb-4">Escolha um Estilo Pronto</h3>
+                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             {Object.values(THEMES).map(theme => (
                               <button
                                 key={theme.id}
                                 onClick={() => updateSettings({ theme: theme.id as any })}
-                                className={`group relative p-4 rounded-lg border transition-all text-left overflow-hidden ${data.settings.theme === theme.id ? 'border-brand-primary bg-brand-primary/10 shadow-xl shadow-brand-primary/10' : 'border-gray-200 bg-gray-50 hover:bg-gray-100/70'}`}
+                                className={`group relative p-3 rounded-lg border transition-all text-left overflow-hidden ${data.settings.theme === theme.id ? 'border-brand-primary bg-brand-primary/10 shadow-xl shadow-brand-primary/10' : 'border-gray-200 bg-gray-50 hover:bg-gray-100/70'}`}
                               >
-                                <div className="flex items-center gap-3">
-                                   <div className="w-8 h-8 rounded-lg shadow-lg shrink-0" style={{ backgroundColor: theme.primary }} />
+                                <div className="flex flex-col gap-2">
+                                   <div className="w-full h-8 rounded shadow-sm shrink-0" style={{ backgroundColor: theme.primary }} />
                                    <div>
-                                      <p className={`text-[10px] font-black uppercase tracking-tighter ${data.settings.theme === theme.id ? 'text-brand-primary' : 'text-gray-700 group-hover:text-gray-900'}`}>{theme.name}</p>
-                                      <p className="text-[8px] font-bold text-gray-500">{theme.id === 'default' ? 'Modo Esportivo' : 'Minimalist'}</p>
+                                      <p className={`text-[9px] font-black uppercase tracking-tighter truncate ${data.settings.theme === theme.id ? 'text-brand-primary' : 'text-gray-700 group-hover:text-gray-900'}`}>{theme.name}</p>
                                    </div>
                                 </div>
                                 {data.settings.theme === theme.id && (
-                                  <div className="absolute -right-2 -bottom-2 bg-brand-primary text-black p-1 rounded-tl-xl">
-                                    <Shield size={10} />
+                                  <div className="absolute top-1 right-1 bg-brand-primary text-white p-0.5 rounded-full">
+                                    <Check size={8} />
                                   </div>
                                 )}
                               </button>
                             ))}
+                            
+                            {/* Custom Theme Button */}
+                            <button
+                              onClick={() => updateSettings({ theme: 'custom' })}
+                              className={`group relative p-3 rounded-lg border transition-all text-left overflow-hidden ${data.settings.theme === 'custom' ? 'border-brand-primary bg-brand-primary/10 shadow-xl shadow-brand-primary/10' : 'border-gray-200 bg-gray-50 hover:bg-gray-100/70'}`}
+                            >
+                              <div className="flex flex-col gap-2">
+                                 <div className="w-full h-8 rounded shadow-sm shrink-0 bg-gradient-to-br from-red-500 via-green-500 to-blue-500" />
+                                 <div>
+                                    <p className={`text-[9px] font-black uppercase tracking-tighter truncate ${data.settings.theme === 'custom' ? 'text-brand-primary' : 'text-gray-700 group-hover:text-gray-900'}`}>Personalizado</p>
+                                 </div>
+                              </div>
+                              {data.settings.theme === 'custom' && (
+                                <div className="absolute top-1 right-1 bg-brand-primary text-white p-0.5 rounded-full">
+                                  <Check size={8} />
+                                </div>
+                              )}
+                            </button>
                          </div>
                        </div>
 
-                     </div>
-                   )}
+                       {/* Color Customizer Section */}
+                       <div className="bg-gray-50 border border-gray-100 rounded-xl p-6 sm:p-8 space-y-6">
+                          <div className="flex items-center gap-3 mb-2">
+                             <div className="bg-brand-primary p-2 rounded-lg text-white">
+                                <Palette size={18} />
+                             </div>
+                             <div>
+                                <h3 className="text-sm font-black uppercase tracking-widest text-brand-primary leading-none">Ajuste Fino de Cores</h3>
+                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Crie sua própria identidade visual</p>
+                             </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                             {[
+                               { label: 'Primária', key: 'primary' as const, desc: 'Menus e Headers' },
+                               { label: 'Acento', key: 'accent' as const, desc: 'Destaques e Ícones' },
+                               { label: 'Fundo Geral', key: 'bg' as const, desc: 'Cor da Janela' },
+                               { label: 'Cartões', key: 'cardBg' as const, desc: 'Fundo dos Cards' },
+                               { label: 'Texto Principal', key: 'textPrimary' as const, desc: 'Títulos e Valores' },
+                               { label: 'Texto Secundário', key: 'textSecondary' as const, desc: 'Legendas e Apoio' },
+                               { label: 'Botões', key: 'buttonBg' as const, desc: 'Fundo dos Botões' },
+                               { label: 'Texto do Botão', key: 'buttonText' as const, desc: 'Etiqueta Interna' },
+                             ].map((color) => {
+                               const currentTheme = THEMES[data.settings.theme as keyof typeof THEMES];
+                               const currentColor = data.settings.customThemeColors?.[color.key] || 
+                                 (currentTheme?.[color.key as keyof typeof currentTheme] as string) || 
+                                 (color.key === 'primary' ? '#141414' : 
+                                  color.key === 'accent' ? '#E11D48' : 
+                                  color.key === 'bg' ? '#F8F9FA' : 
+                                  color.key === 'cardBg' ? '#FFFFFF' :
+                                  color.key === 'textPrimary' ? '#000000' :
+                                  color.key === 'textSecondary' ? '#6B7280' :
+                                  color.key === 'buttonBg' ? '#E11D48' : '#FFFFFF');
+
+                               return (
+                                 <div key={color.key} className="space-y-3">
+                                   <div className="flex flex-col">
+                                      <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1">{color.label}</label>
+                                      <p className="text-[8px] font-bold text-gray-400 uppercase mb-2">{color.desc}</p>
+                                   </div>
+                                   <div className="flex items-center gap-3 bg-white p-2.5 rounded-lg border border-gray-200 group-focus-within:border-brand-primary transition-all">
+                                      <input 
+                                        type="color" 
+                                        className="w-10 h-10 rounded shadow-sm border-none cursor-pointer bg-transparent p-0"
+                                        value={currentColor}
+                                        onChange={(e) => {
+                                          const prevColors = data.settings.customThemeColors || {
+                                            primary: currentTheme?.primary || '#141414',
+                                            accent: currentTheme?.accent || '#E11D48',
+                                            bg: currentTheme?.bg || '#F8F9FA',
+                                            cardBg: '#FFFFFF',
+                                            textPrimary: '#000000',
+                                            textSecondary: '#6B7280',
+                                            buttonBg: currentTheme?.accent || '#E11D48',
+                                            buttonText: '#FFFFFF'
+                                          };
+                                          
+                                          updateSettings({ 
+                                            theme: 'custom',
+                                            customThemeColors: {
+                                              ...prevColors,
+                                              [color.key]: e.target.value
+                                            } 
+                                          });
+                                        }}
+                                      />
+                                      <input 
+                                        type="text" 
+                                        className="flex-1 bg-transparent border-none text-[10px] font-mono font-black uppercase outline-none text-gray-700 w-full"
+                                        value={currentColor}
+                                        onChange={(e) => {
+                                          const prevColors = data.settings.customThemeColors || {
+                                            primary: currentTheme?.primary || '#141414',
+                                            accent: currentTheme?.accent || '#E11D48',
+                                            bg: currentTheme?.bg || '#F8F9FA',
+                                            cardBg: '#FFFFFF',
+                                            textPrimary: '#000000',
+                                            textSecondary: '#6B7280',
+                                            buttonBg: currentTheme?.accent || '#E11D48',
+                                            buttonText: '#FFFFFF'
+                                          };
+                                          
+                                          updateSettings({ 
+                                            theme: 'custom',
+                                            customThemeColors: {
+                                              ...prevColors,
+                                              [color.key]: e.target.value
+                                            } 
+                                          });
+                                        }}
+                                      />
+                                   </div>
+                                 </div>
+                               );
+                             })}
+                          </div>
+
+                          <div className="pt-4 border-t border-gray-200 flex items-center justify-between">
+                             <p className="text-[9px] text-gray-400 font-bold italic">* As alterações são aplicadas e salvas como "Tema Personalizado" automaticamente.</p>
+                             {data.settings.theme === 'custom' && (
+                               <button 
+                                 onClick={() => updateSettings({ theme: 'default', customThemeColors: undefined })}
+                                 className="text-[9px] font-black uppercase text-red-500 hover:text-red-700 underline underline-offset-4"
+                               >
+                                 Resetar para Padrão
+                               </button>
+                             )}
+                          </div>
+                       </div>
+                    </div>
+                  )}
+
+                  {activeSubTab === 'appearance' && (
+                    <div className="space-y-8 text-left">
+                       <div className="flex items-center gap-3 mb-6">
+                          <div className="bg-brand-primary p-3 rounded-lg text-white shadow-lg">
+                             <Settings size={20} />
+                          </div>
+                          <div>
+                             <h3 className="text-lg font-black uppercase italic tracking-tighter text-brand-primary leading-none">Customização do Banner</h3>
+                             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Controle total sobre o topo do app</p>
+                          </div>
+                       </div>
+
+                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                          <div className="space-y-6">
+                             <div>
+                                <div className="flex justify-between mb-2">
+                                   <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Escala do Veículo</label>
+                                   <span className="text-[10px] font-black text-brand-primary">{data.settings.headerConfig?.iconScale || 100}%</span>
+                                </div>
+                                <input 
+                                  type="range" 
+                                  min="0.1" 
+                                  max="1000" 
+                                  step="0.1"
+                                  className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-brand-primary"
+                                  value={data.settings.headerConfig?.iconScale || 100}
+                                  onChange={(e) => updateSettings({ 
+                                    headerConfig: { 
+                                      bannerHeight: 180,
+                                      bgOpacity: 1,
+                                      bgBlur: 0,
+                                      showIcon: true,
+                                      bgColor: '#141414',
+                                      ...data.settings.headerConfig, 
+                                      iconScale: parseFloat(e.target.value) 
+                                    } 
+                                  })}
+                                />
+                             </div>
+
+                             <div>
+                                <div className="flex justify-between mb-2">
+                                   <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Altura do Cabeçalho</label>
+                                   <span className="text-[10px] font-black text-brand-primary">{data.settings.headerConfig?.bannerHeight || 180}px</span>
+                                </div>
+                                <input 
+                                  type="range" 
+                                  min="20" 
+                                  max="800" 
+                                  step="5"
+                                  className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-brand-primary"
+                                  value={data.settings.headerConfig?.bannerHeight || 180}
+                                  onChange={(e) => updateSettings({ 
+                                    headerConfig: { 
+                                      iconScale: 100,
+                                      bgOpacity: 1,
+                                      bgBlur: 0,
+                                      showIcon: true,
+                                      bgColor: '#141414',
+                                      ...data.settings.headerConfig, 
+                                      bannerHeight: parseInt(e.target.value) 
+                                    } 
+                                  })}
+                                />
+                             </div>
+
+                             <div>
+                                <div className="flex justify-between mb-2">
+                                   <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Opacidade do Fundo</label>
+                                   <span className="text-[10px] font-black text-brand-primary">{Math.round((data.settings.headerConfig?.bgOpacity || 1) * 100)}%</span>
+                                </div>
+                                <input 
+                                  type="range" 
+                                  min="0" 
+                                  max="1" 
+                                  step="0.1"
+                                  className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-brand-primary"
+                                  value={data.settings.headerConfig?.bgOpacity || 1}
+                                  onChange={(e) => updateSettings({ 
+                                    headerConfig: { 
+                                      iconScale: 100,
+                                      bannerHeight: 180,
+                                      bgBlur: 0,
+                                      showIcon: true,
+                                      bgColor: '#141414',
+                                      ...data.settings.headerConfig, 
+                                      bgOpacity: parseFloat(e.target.value) 
+                                    } 
+                                  })}
+                                />
+                             </div>
+                          </div>
+
+                          <div className="space-y-6">
+                             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
+                                <div>
+                                   <p className="text-[10px] font-black uppercase text-gray-700 tracking-widest">Mostrar Ilustração</p>
+                                   <p className="text-[8px] font-bold text-gray-400 uppercase">Habilitar ícone central</p>
+                                </div>
+                                <button 
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    updateSettings({ 
+                                      headerConfig: { 
+                                        iconScale: 100,
+                                        bannerHeight: 180,
+                                        bgOpacity: 1,
+                                        bgBlur: 0,
+                                        bgColor: '#141414',
+                                        ...data.settings.headerConfig, 
+                                        showIcon: !data.settings.headerConfig?.showIcon 
+                                      } 
+                                    });
+                                  }}
+                                  className={`w-12 h-6 rounded-full relative transition-all shadow-inner ${data.settings.headerConfig?.showIcon ? 'bg-brand-primary' : 'bg-gray-300'}`}
+                                >
+                                   <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm ${data.settings.headerConfig?.showIcon ? 'right-1' : 'left-1'}`} />
+                                </button>
+                             </div>
+
+                             <div>
+                                <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-2 block">Cor de Fundo do Banner</label>
+                                <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                   <input 
+                                     type="color" 
+                                     className="w-10 h-10 rounded border-none cursor-pointer bg-transparent shadow-sm"
+                                     value={data.settings.headerConfig?.bgColor || '#141414'}
+                                     onChange={(e) => updateSettings({ 
+                                       headerConfig: { 
+                                         iconScale: 100,
+                                         bannerHeight: 180,
+                                         bgOpacity: 1,
+                                         bgBlur: 0,
+                                         showIcon: true,
+                                         ...data.settings.headerConfig, 
+                                         bgColor: e.target.value 
+                                       } 
+                                     })}
+                                   />
+                                   <input 
+                                      type="text"
+                                      className="flex-1 bg-transparent border-none text-xs font-mono font-black uppercase text-gray-700 outline-none"
+                                      value={data.settings.headerConfig?.bgColor || '#141414'}
+                                      onChange={(e) => updateSettings({ 
+                                      headerConfig: { 
+                                        iconScale: 100,
+                                        bannerHeight: 180,
+                                        bgOpacity: 1,
+                                        bgBlur: 0,
+                                        showIcon: true,
+                                        ...data.settings.headerConfig, 
+                                        bgColor: e.target.value 
+                                      } 
+                                      })}
+                                   />
+                                </div>
+                             </div>
+
+                             <div>
+                                <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-2 block">Imagem de Fundo (URL)</label>
+                                <input 
+                                  type="text"
+                                  placeholder="https://exemplo.com/fibra-carbono.jpg"
+                                  className="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs font-bold text-gray-800 placeholder-gray-400 focus:bg-white focus:border-brand-primary outline-none transition-all shadow-sm"
+                                  value={data.settings.headerConfig?.bgImage || ''}
+                                   onChange={(e) => updateSettings({ 
+                                     headerConfig: { 
+                                       iconScale: 100,
+                                       bannerHeight: 180,
+                                       bgOpacity: 1,
+                                       bgBlur: 0,
+                                       showIcon: true,
+                                       bgColor: '#141414',
+                                       ...data.settings.headerConfig, 
+                                       bgImage: e.target.value 
+                                     } 
+                                   })}
+                                />
+                                <p className="text-[8px] text-gray-400 font-bold uppercase mt-2">* Use links diretos para fotos ou texturas de fundo.</p>
+                             </div>
+                          </div>
+                       </div>
+
+                       <div className="p-6 bg-brand-primary/5 border border-brand-primary/10 rounded-xl">
+                          <p className="text-[10px] text-brand-primary font-black uppercase mb-2">Dica Pro:</p>
+                          <p className="text-xs text-gray-600 font-medium leading-relaxed italic">
+                            "Você pode usar fotos reais do seu carro carregando-as em algum servidor de imagens e colando o link acima, 
+                            ou remover a ilustração para um visual minimalista apenas com cores sólidas."
+                          </p>
+                       </div>
+                    </div>
+                  )}
 
                    {activeSubTab === 'search' && (
                     <div className="space-y-6 text-left">

@@ -22,7 +22,7 @@ export const VehicleImage: React.FC<VehicleImageProps> = ({ src, alt, className 
     <img 
       src={src} 
       alt={alt} 
-      className={`${className} w-full h-full object-cover block`} 
+      className={`${className} w-full h-full object-contain block`} 
       referrerPolicy="no-referrer" 
       onError={() => setError(true)}
     />

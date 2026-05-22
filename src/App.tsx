@@ -399,6 +399,7 @@ export default function App() {
             className="space-y-2"
           >
             <VehicleDetailHeader 
+              data={data}
               selectedVehicle={selectedVehicle}
               onBack={() => setSelectedVehicle(null)}
               onExport={() => exportVehicle(selectedVehicle)}

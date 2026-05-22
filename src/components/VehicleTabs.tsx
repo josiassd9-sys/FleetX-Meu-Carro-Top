@@ -140,7 +140,7 @@ export const VehicleTabs: React.FC<VehicleTabsProps> = ({
         </button>
         <button 
           onClick={() => setIsBudgetOpen(true)}
-          className="flex-1 bg-white hover:bg-zinc-50 text-brand-primary px-4 py-3 rounded-lg font-black uppercase text-[10px] tracking-tighter border border-zinc-950 transition-all shadow-sm shrink-0"
+          className="flex-1 bg-button-bg text-button-text px-4 py-3 rounded-lg font-black uppercase text-[10px] tracking-tighter border border-zinc-950 transition-all shadow-md shrink-0 flex items-center justify-center gap-2"
         >
           <ShoppingCart size={14} /> Orçamento ({(selectedVehicle.parts || []).filter(p => p.isInBudget).length})
         </button>
@@ -150,7 +150,7 @@ export const VehicleTabs: React.FC<VehicleTabsProps> = ({
             setSimulationResults([]);
             setIsSimulating(true);
           }}
-          className="flex-1 bg-white hover:bg-zinc-50 text-brand-primary px-4 py-3 rounded-lg font-black uppercase text-[10px] tracking-tighter border border-zinc-950 transition-all shadow-sm shrink-0"
+          className="flex-1 bg-card-bg hover:bg-zinc-50 text-text-primary px-4 py-3 rounded-lg font-black uppercase text-[10px] tracking-tighter border border-zinc-950 transition-all shadow-sm shrink-0 flex items-center justify-center gap-2"
         >
           <Activity size={14} /> Simulador
         </button>
@@ -163,8 +163,8 @@ export const VehicleTabs: React.FC<VehicleTabsProps> = ({
             onClick={() => setActiveTab(tab.id as any)}
             className={`flex items-center gap-1.5 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all font-black text-[9px] uppercase tracking-widest ${
               activeTab === tab.id 
-              ? 'bg-brand-primary text-white shadow-md z-10' 
-              : 'bg-white text-zinc-950 hover:bg-zinc-50 border border-zinc-100 shadow-sm'
+              ? 'bg-button-bg text-button-text shadow-md z-10' 
+              : 'bg-card-bg text-text-secondary hover:bg-zinc-50 border border-zinc-100 shadow-sm'
             }`}
           >
             <tab.icon size={12} />

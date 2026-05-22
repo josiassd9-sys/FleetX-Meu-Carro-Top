@@ -5,10 +5,15 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
-  --color-brand-primary: #000000;
-  --color-brand-accent: #2563EB;
-  --color-brand-bg: #FFFFFF;
-  --color-brand-surface: #F8FAFC;
+  --color-brand-primary: var(--color-brand-primary, #000000);
+  --color-brand-accent: var(--color-brand-accent, #2563EB);
+  --color-brand-bg: var(--color-brand-bg, #FFFFFF);
+  --color-card-bg: var(--color-card-bg, #FFFFFF);
+  --color-text-primary: var(--color-text-primary, #000000);
+  --color-text-secondary: var(--color-text-secondary, #6B7280);
+  --color-button-bg: var(--color-button-bg, #2563EB);
+  --color-button-text: var(--color-button-text, #FFFFFF);
+  --color-brand-surface: var(--color-card-bg, #F8FAFC);
 
   /* Standard Professional Radius */
   --radius-xs: 4px;

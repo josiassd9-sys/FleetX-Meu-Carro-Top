@@ -23,14 +23,35 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       {/* Linha 1: Logotipo Retangular Elevado e Centralizado */}
       <div className="flex justify-center w-full">
         <motion.div 
-          whileHover={{ scale: 1.01, y: -2 }}
-          className="w-full h-32 sm:h-48 rounded-xl shadow-xl shadow-zinc-200/50 shrink-0 border-2 border-zinc-50 flex items-center justify-center overflow-hidden bg-transparent"
+          whileHover={{ scale: 1.005 }}
+          style={{ 
+            height: `${data.settings.headerConfig?.bannerHeight || 128}px`,
+            backgroundColor: data.settings.headerConfig?.bgColor || '#141414',
+            backgroundImage: data.settings.headerConfig?.bgImage ? `url(${data.settings.headerConfig.bgImage})` : 'none',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            opacity: data.settings.headerConfig?.bgOpacity ?? 1,
+            backdropFilter: `blur(${data.settings.headerConfig?.bgBlur || 0}px)`,
+          }}
+          className="w-full rounded-xl shadow-xl shadow-zinc-200/50 shrink-0 border-2 border-zinc-50 flex items-center justify-center overflow-hidden transition-all duration-300"
         >
-          <img 
-            src="/src/assets/images/fleetx_logo_strada.png" 
-            alt="FleetX Logo" 
-            className="w-full h-full object-cover"
-          />
+          {(data.settings.headerConfig?.showIcon ?? true) && (
+            <motion.img 
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ 
+                opacity: 1, 
+                scale: (data.settings.headerConfig?.iconScale || 100) / 100 
+              }}
+              src="/src/assets/images/fleetx_logo_strada.png" 
+              alt="FleetX Logo" 
+              style={{ 
+                height: '100px', // Base height for consistent scaling independent of container height
+                width: 'auto',
+                transformOrigin: 'center center'
+              }}
+              className="object-contain transition-all duration-300 pointer-events-none"
+            />
+          )}
         </motion.div>
       </div>
 
