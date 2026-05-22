@@ -152,6 +152,7 @@ export function useAppData() {
       buttonBg: themeKey === 'custom' && customColors ? customColors.buttonBg : (theme?.accent || '#E11D48'),
       buttonText: themeKey === 'custom' && customColors ? customColors.buttonText : '#FFFFFF',
       vehicleHeaderBg: themeKey === 'custom' && customColors?.vehicleHeaderBg ? customColors.vehicleHeaderBg : (theme?.primary || '#141414'),
+      subCardBg: themeKey === 'custom' && customColors?.subCardBg ? customColors.subCardBg : (themeKey === 'dark' || themeKey === 'noir' ? 'rgba(255,255,255,0.06)' : '#F9FAFB'),
     };
 
     const header = data.settings?.headerConfig || {
@@ -183,6 +184,7 @@ export function useAppData() {
         --color-button-bg: ${colors.buttonBg};
         --color-button-text: ${colors.buttonText};
         --color-vehicle-header-bg: ${colors.vehicleHeaderBg};
+        --color-sub-card-bg: ${colors.subCardBg};
         
         --header-height: ${header.bannerHeight}px;
         --header-icon-scale: ${header.iconScale / 100};

@@ -502,13 +502,19 @@ export const VehicleDetailHeader: React.FC<VehicleDetailHeaderProps> = ({
 
               {/* Informative Stats Cards - Moved here for better visibility */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 w-full mb-6 max-w-4xl mx-auto px-4">
-                <div className="bg-white border border-zinc-100 p-4 rounded-xl text-left shadow-sm overflow-hidden">
-                  <p className="text-zinc-400 text-[9px] uppercase font-black tracking-widest mb-1.5 truncate">Engenharia</p>
+                <div 
+                  style={{ backgroundColor: 'var(--color-sub-card-bg)', borderColor: 'rgba(128,128,128,0.15)' }}
+                  className="border p-4 rounded-xl text-left shadow-sm overflow-hidden transition-colors"
+                >
+                  <p style={{ color: 'var(--color-text-secondary)' }} className="text-[9px] uppercase font-black tracking-widest mb-1.5 truncate">Engenharia</p>
                   <p className="text-xl sm:text-2xl font-black italic tracking-tighter text-brand-primary truncate">{selectedVehicle.parts?.length || 0}</p>
-                  <p className="text-[9px] text-zinc-400 font-bold uppercase truncate">Itens</p>
+                  <p style={{ color: 'var(--color-text-secondary)' }} className="text-[9px] font-bold uppercase truncate">Itens</p>
                 </div>
-                <div className="bg-white border border-zinc-100 p-4 rounded-xl relative group text-left shadow-sm overflow-hidden">
-                  <p className="text-zinc-400 text-[9px] uppercase font-black tracking-widest mb-1.5 truncate">
+                <div 
+                  style={{ backgroundColor: 'var(--color-sub-card-bg)', borderColor: 'rgba(128,128,128,0.15)' }}
+                  className="border p-4 rounded-xl relative group text-left shadow-sm overflow-hidden transition-colors"
+                >
+                  <p style={{ color: 'var(--color-text-secondary)' }} className="text-[9px] uppercase font-black tracking-widest mb-1.5 truncate">
                     Odômetro IA
                   </p>
                   <div className="flex items-baseline gap-0.5 truncate">
@@ -516,8 +522,11 @@ export const VehicleDetailHeader: React.FC<VehicleDetailHeaderProps> = ({
                     <span className="text-[10px] text-brand-accent font-black uppercase">{getDistanceUnit()}</span>
                   </div>
                 </div>
-                <div className="bg-white border border-zinc-100 p-4 rounded-xl text-left shadow-sm overflow-hidden">
-                  <p className="text-zinc-400 text-[9px] uppercase font-black tracking-widest mb-1.5 truncate">Consumo Global</p>
+                <div 
+                  style={{ backgroundColor: 'var(--color-sub-card-bg)', borderColor: 'rgba(128,128,128,0.15)' }}
+                  className="border p-4 rounded-xl text-left shadow-sm overflow-hidden transition-colors"
+                >
+                  <p style={{ color: 'var(--color-text-secondary)' }} className="text-[9px] uppercase font-black tracking-widest mb-1.5 truncate">Consumo Global</p>
                   <p className="text-xl sm:text-2xl font-black italic tracking-tighter text-brand-accent truncate">
                     {(() => {
                       const logs = [...(selectedVehicle.fuelLogs || [])].sort((a, b) => a.mileage - b.mileage);
@@ -529,27 +538,34 @@ export const VehicleDetailHeader: React.FC<VehicleDetailHeaderProps> = ({
                   </p>
                   <p className="text-[9px] text-brand-accent font-bold uppercase truncate">Km / Litro</p>
                 </div>
-                <div className="bg-white border border-zinc-100 p-4 rounded-xl text-left shadow-sm overflow-hidden">
-                  <p className="text-zinc-400 text-[9px] uppercase font-black tracking-widest mb-1.5 truncate">Saúde Estrutural</p>
+                <div 
+                  style={{ backgroundColor: 'var(--color-sub-card-bg)', borderColor: 'rgba(128,128,128,0.15)' }}
+                  className="border p-4 rounded-xl text-left shadow-sm overflow-hidden transition-colors"
+                >
+                  <p style={{ color: 'var(--color-text-secondary)' }} className="text-[9px] uppercase font-black tracking-widest mb-1.5 truncate">Saúde Estrutural</p>
                   <p className={`text-xl sm:text-2xl font-black italic tracking-tighter truncate ${getVehicleHealth() > 80 ? 'text-emerald-500' : getVehicleHealth() > 50 ? 'text-amber-500' : 'text-rose-500'}`}>
                     {Math.round(getVehicleHealth())}%
                   </p>
                 </div>
-                <div className="bg-white border border-zinc-100 p-4 rounded-xl text-left shadow-sm overflow-hidden">
-                  <p className="text-zinc-400 text-[9px] uppercase font-black tracking-widest mb-1.5 truncate">Valorização</p>
+                <div 
+                  style={{ backgroundColor: 'var(--color-sub-card-bg)', borderColor: 'rgba(128,128,128,0.15)' }}
+                  className="border p-4 rounded-xl text-left shadow-sm overflow-hidden transition-colors"
+                >
+                  <p style={{ color: 'var(--color-text-secondary)' }} className="text-[9px] uppercase font-black tracking-widest mb-1.5 truncate">Valorização</p>
                   <div className="flex items-center gap-1.5 truncate">
                      <p className="text-xl sm:text-2xl font-black italic tracking-tighter text-brand-primary truncate">
                        {getMaintenanceScore()}%
                      </p>
-                     <span className="bg-brand-accent text-white text-[7px] font-black px-1 py-0.5 rounded-full uppercase">GOLD</span>
+                     <span className="bg-brand-accent text-white text-[7px] font-black px-1 py-0.5 rounded-full uppercase text-center">GOLD</span>
                   </div>
                 </div>
                 <motion.div 
                   whileTap={{ scale: 0.95 }}
                   onClick={onUpdateFipe}
-                  className="bg-white border border-zinc-100 p-4 rounded-xl cursor-pointer hover:border-brand-accent transition-all text-left shadow-sm group overflow-hidden"
+                  style={{ backgroundColor: 'var(--color-sub-card-bg)', borderColor: 'rgba(128,128,128,0.15)' }}
+                  className="border p-4 rounded-xl cursor-pointer hover:border-brand-accent transition-all text-left shadow-sm group overflow-hidden"
                 >
-                  <p className="text-zinc-400 text-[9px] uppercase font-black tracking-widest mb-1.5 flex justify-between items-center truncate">
+                  <p style={{ color: 'var(--color-text-secondary)' }} className="text-[9px] uppercase font-black tracking-widest mb-1.5 flex justify-between items-center truncate">
                     <span className="truncate">{marketRef}</span>
                     <RefreshCw size={10} className={isUpdatingFipe ? "animate-spin text-brand-accent shrink-0" : "text-zinc-300 group-hover:text-brand-accent shrink-0"} />
                   </p>

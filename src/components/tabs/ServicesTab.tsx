@@ -47,7 +47,8 @@ export const ServicesTab: React.FC<ServicesTabProps> = ({
             <motion.div 
               key={service.id} 
               layout
-              className="bg-white p-6 rounded-xl border border-zinc-100 hover:border-brand-primary/40 transition-all shadow-sm group relative overflow-hidden"
+              style={{ backgroundColor: 'var(--color-card-bg)', borderColor: 'rgba(128,128,128,0.15)' }}
+              className="p-6 rounded-xl border hover:border-brand-primary/40 transition-all shadow-sm group relative overflow-hidden"
             >
               <div className="flex flex-col sm:flex-row items-start justify-between gap-4 relative z-10">
                 <div className="space-y-3 flex-1">
@@ -59,15 +60,19 @@ export const ServicesTab: React.FC<ServicesTabProps> = ({
                       {service.mileage.toLocaleString()} km
                     </span>
                   </div>
-                  <h4 className="text-xl font-black text-brand-primary uppercase tracking-tighter leading-none italic">{service.provider}</h4>
-                  <p className="text-xs font-bold text-zinc-500 italic">"{service.description}"</p>
+                  <h4 style={{ color: 'var(--color-text-primary)' }} className="text-xl font-black uppercase tracking-tighter leading-none italic">{service.provider}</h4>
+                  <p style={{ color: 'var(--color-text-secondary)' }} className="text-xs font-bold italic">"{service.description}"</p>
                   
                   {service.items && service.items.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-4">
                        {service.items.map((item, idx) => (
-                         <div key={idx} className="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 px-3 py-1.5 rounded-lg">
+                         <div 
+                           key={idx} 
+                           style={{ backgroundColor: 'var(--color-sub-card-bg)', borderColor: 'rgba(128,128,128,0.1)' }}
+                           className="flex items-center gap-1.5 border px-3 py-1.5 rounded-lg"
+                         >
                             <Box size={10} className="text-brand-accent" />
-                            <span className="text-[9px] font-black text-zinc-600 uppercase tracking-tight">{item}</span>
+                            <span style={{ color: 'var(--color-text-primary)' }} className="text-[9px] font-black uppercase tracking-tight">{item}</span>
                          </div>
                        ))}
                     </div>

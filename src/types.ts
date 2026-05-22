@@ -202,6 +202,7 @@ export interface AppData {
       buttonBg: string;
       buttonText: string;
       vehicleHeaderBg?: string;
+      subCardBg?: string;
     };
     headerConfig?: {
       iconScale: number;

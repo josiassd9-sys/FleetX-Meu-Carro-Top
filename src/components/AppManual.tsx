@@ -131,6 +131,7 @@ export const AppManual: React.FC = () => {
           <ul className="list-disc ml-6 space-y-2">
             <li><strong>20+ Paletas de Cores:</strong> Escolha entre temas como "Slate Professional", "Bordeaux Luxury", "Nordic Minimalism" ou "Graphite Tech". São tons selecionados para passar autoridade e clareza.</li>
             <li><strong>Nova Identidade Visual:</strong> O ícone oficial (Vetor de Pickup Tech) agora estampa o cabeçalho e relatórios, garantindo um visual moderno de "Fleet Management" de última geração.</li>
+            <li><strong>Personalização de Cores e Sub-cards:</strong> Agora você pode alterar a cor de fundo do card principal do veículo e também definir cores customizadas para os **sub-cards** internos (como as métricas de Odômetro IA, Consumo Global, Valorização FIPE e as abas secundárias).</li>
           </ul>
         </div>
       </ManualItem>
@@ -374,6 +375,9 @@ export const AppManual: React.FC = () => {
         onToggle={() => toggleIndex(16)}
       >
         <p>O cabeçalho visual e o banner da sua página inicial podem ser configurados milimetricamente para um design sob medida. Vá em Configurações &gt; Estilo e utilize os refinamentos do Cabeçalho:</p>
+        <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 text-[11px] text-amber-800 font-bold mb-4">
+          ⚠️ **Isolamento de Layout**: As configurações de visualização ajustadas nesta aba aplicam-se **única e exclusivamente ao cabeçalho/cardápio da Página Inicial**. Elas estão completamente isoladas das telas internas de detalhes do carro ou dos cartões individuais de garagem, permitindo flexibilidade estética sem poluir o visual corporativo sóbrio das áreas técnicas.
+        </div>
         <ul className="list-disc ml-6 space-y-2">
           <li><strong>Escala do Logotipo (Pickup):</strong> Controle o tamanho exato da pickup tech centralizada do banner da Home (de 50% a 200%). Esse ajuste de precisão afeta exclusivamente a entrada do aplicativo, mantendo os designs das imagens internas de veículos na Garagem intactos.</li>
           <li><strong>Altura do Banner:</strong> Controle fluido da altura de exibição do cabeçalho principal da página inicial.</li>

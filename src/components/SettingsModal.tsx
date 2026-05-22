@@ -392,6 +392,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                { label: 'Botões', key: 'buttonBg' as const, desc: 'Fundo dos Botões' },
                                { label: 'Texto do Botão', key: 'buttonText' as const, desc: 'Etiqueta Interna' },
                                 { label: 'Fundo do Veículo', key: 'vehicleHeaderBg' as const, desc: 'Banner Interno' },
+                                { label: 'Sub-cards', key: 'subCardBg' as const, desc: 'Cards de Métricas e Detalhes' },
                              ].map((color) => {
                                const currentTheme = THEMES[data.settings.theme as keyof typeof THEMES];
                                const currentColor = data.settings.customThemeColors?.[color.key] || 
@@ -404,6 +405,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                   color.key === 'textSecondary' ? '#6B7280' :
                                   color.key === 'buttonBg' ? '#E11D48' : 
                                    color.key === 'vehicleHeaderBg' ? (currentTheme?.primary || '#141414') :
+                                   color.key === 'subCardBg' ? (currentTheme?.id === 'dark' || currentTheme?.id === 'noir' ? 'rgba(255,255,255,0.06)' : '#F9FAFB') :
                                    '#FFFFFF');
 
                                return (
@@ -427,7 +429,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                             textSecondary: '#6B7280',
                                             buttonBg: currentTheme?.accent || '#E11D48',
                                             buttonText: '#FFFFFF',
-                                            vehicleHeaderBg: currentTheme?.primary || '#141414'
+                                            vehicleHeaderBg: currentTheme?.primary || '#141414',
+                                            subCardBg: currentTheme?.id === 'dark' || currentTheme?.id === 'noir' ? 'rgba(255,255,255,0.06)' : '#F9FAFB'
                                           };
                                           
                                           updateSettings({ 
@@ -453,7 +456,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                             textSecondary: '#6B7280',
                                             buttonBg: currentTheme?.accent || '#E11D48',
                                             buttonText: '#FFFFFF',
-                                            vehicleHeaderBg: currentTheme?.primary || '#141414'
+                                            vehicleHeaderBg: currentTheme?.primary || '#141414',
+                                            subCardBg: currentTheme?.id === 'dark' || currentTheme?.id === 'noir' ? 'rgba(255,255,255,0.06)' : '#F9FAFB'
                                           };
                                           
                                           updateSettings({ 

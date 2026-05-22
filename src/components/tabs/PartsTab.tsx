@@ -64,23 +64,29 @@ export const PartsTab: React.FC<PartsTabProps> = ({
               <motion.div 
                 key={part.id} 
                 layout
-                className="bg-white p-5 rounded-xl border border-gray-100 transition-all hover:border-brand-primary/20 shadow-sm flex flex-col relative overflow-hidden group"
+                style={{ backgroundColor: 'var(--color-card-bg)', borderColor: 'rgba(128,128,128,0.15)' }}
+                className="p-5 rounded-xl border transition-all hover:border-brand-primary/20 shadow-sm flex flex-col relative overflow-hidden group"
               >
                 <div className="flex justify-between items-start mb-3">
-                  <div className="shrink-0 bg-gray-50 p-2.5 rounded-lg group-hover:bg-brand-primary/10 transition-colors">
+                  <div 
+                    style={{ backgroundColor: 'var(--color-sub-card-bg)' }}
+                    className="shrink-0 p-2.5 rounded-lg group-hover:bg-brand-primary/10 transition-colors"
+                  >
                     <Package size={18} className="text-brand-primary" />
                   </div>
                   <div className="flex gap-1">
                     <button 
                       onClick={() => onToggleBudget(part.id)}
-                      className={`p-2 rounded-lg transition-all border border-transparent ${part.isInBudget ? 'bg-brand-accent text-brand-primary border-brand-primary/20' : 'bg-gray-50 text-gray-400 hover:text-brand-primary'}`}
+                      style={part.isInBudget ? { backgroundColor: 'var(--color-brand-accent)', color: 'var(--color-brand-primary)', borderColor: 'rgba(128,128,128,0.15)' } : { backgroundColor: 'var(--color-sub-card-bg)' }}
+                      className={`p-2 rounded-lg transition-all border border-transparent ${part.isInBudget ? '' : 'text-gray-400 hover:text-brand-primary'}`}
                       title={part.isInBudget ? "No Orçamento" : "Adicionar ao Orçamento"}
                     >
                       <Calculator size={12} />
                     </button>
                     <button 
                       onClick={() => onDeleteItem(part.id)}
-                      className="p-2 bg-gray-50 text-gray-400 hover:text-red-500 rounded-lg transition-all"
+                      style={{ backgroundColor: 'var(--color-sub-card-bg)' }}
+                      className="p-2 text-gray-400 hover:text-red-500 rounded-lg transition-all"
                     >
                       <Trash2 size={12} />
                     </button>
@@ -88,20 +94,20 @@ export const PartsTab: React.FC<PartsTabProps> = ({
                 </div>
 
                 <div className="mb-3">
-                  <h4 className="text-sm font-black text-brand-primary uppercase tracking-tight line-clamp-1">{part.name}</h4>
-                  <p className="text-[9px] text-gray-400 font-mono font-bold tracking-widest uppercase">{part.code || 'S/ COD'}</p>
+                  <h4 style={{ color: 'var(--color-text-primary)' }} className="text-sm font-black uppercase tracking-tight line-clamp-1">{part.name}</h4>
+                  <p style={{ color: 'var(--color-text-secondary)' }} className="text-[9px] font-mono font-bold tracking-widest uppercase">{part.code || 'S/ COD'}</p>
                 </div>
 
                 <div className="mt-auto space-y-4">
                   <div>
-                    <div className="flex justify-between text-[8px] font-black uppercase tracking-widest mb-1 shadow-sm px-1">
+                    <div style={{ color: 'var(--color-text-secondary)' }} className="flex justify-between text-[8px] font-black uppercase tracking-widest mb-1 shadow-sm px-1">
                       <span className="flex items-center gap-1">
                         {healthPercent > 20 ? <CheckCircle2 size={8} className="text-green-500" /> : healthPercent > 0 ? <AlertTriangle size={8} className="text-amber-500" /> : <Clock size={8} className="text-red-500" />}
                         IA: {Math.round(healthPercent)}%
                       </span>
-                      <span className="text-gray-400">{usedKm.toLocaleString()} / {lifeKm.toLocaleString()} KM</span>
+                      <span>{usedKm.toLocaleString()} / {lifeKm.toLocaleString()} KM</span>
                     </div>
-                    <div className="w-full bg-gray-100 h-1 rounded-full overflow-hidden">
+                    <div style={{ backgroundColor: 'var(--color-sub-card-bg)' }} className="w-full h-1 rounded-full overflow-hidden">
                       <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: `${healthPercent}%` }}
@@ -111,13 +117,19 @@ export const PartsTab: React.FC<PartsTabProps> = ({
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-gray-50 p-2 rounded-lg border border-gray-100">
-                       <p className="text-[7px] text-gray-400 font-black uppercase mb-0.5">Instalação</p>
-                       <p className="text-[9px] font-bold text-gray-700">{replacedDate ? replacedDate.toLocaleDateString('pt-BR') : '--'}</p>
+                    <div 
+                      style={{ backgroundColor: 'var(--color-sub-card-bg)', borderColor: 'rgba(128,128,128,0.1)' }}
+                      className="p-2 rounded-lg border text-left"
+                    >
+                       <p style={{ color: 'var(--color-text-secondary)' }} className="text-[7px] font-black uppercase mb-0.5">Instalação</p>
+                       <p style={{ color: 'var(--color-text-primary)' }} className="text-[9px] font-bold">{replacedDate ? replacedDate.toLocaleDateString('pt-BR') : '--'}</p>
                     </div>
-                    <div className="bg-gray-50 p-2 rounded-lg border border-gray-100">
-                       <p className="text-[7px] text-gray-400 font-black uppercase mb-0.5">KM Atual</p>
-                       <p className="text-[9px] font-bold text-gray-700">{installedKm.toLocaleString()}</p>
+                    <div 
+                      style={{ backgroundColor: 'var(--color-sub-card-bg)', borderColor: 'rgba(128,128,128,0.1)' }}
+                      className="p-2 rounded-lg border text-left"
+                    >
+                       <p style={{ color: 'var(--color-text-secondary)' }} className="text-[7px] font-black uppercase mb-0.5">KM Atual</p>
+                       <p style={{ color: 'var(--color-text-primary)' }} className="text-[9px] font-bold">{installedKm.toLocaleString()}</p>
                     </div>
                   </div>
 

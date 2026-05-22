@@ -205,7 +205,8 @@ export const TiresTab: React.FC<TiresTabProps> = ({
               <motion.div
                 layout
                 key={tire.id}
-                className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm hover:shadow-md transition-all group overflow-hidden relative"
+                style={{ backgroundColor: 'var(--color-card-bg)', borderColor: 'rgba(128,128,128,0.15)' }}
+                className="border rounded-xl p-5 shadow-sm hover:shadow-md transition-all group overflow-hidden relative"
               >
                 <div className="flex flex-col gap-5">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -215,12 +216,12 @@ export const TiresTab: React.FC<TiresTabProps> = ({
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="font-black text-base text-gray-900 leading-tight">{tire.brand}</h4>
+                          <h4 style={{ color: 'var(--color-text-primary)' }} className="font-black text-base leading-tight">{tire.brand}</h4>
                           <span className={cn("text-[7px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest", bgStatusColor, "text-white")}>
                             {usage > 90 ? 'Crítico' : 'OK'}
                           </span>
                         </div>
-                        <p className="text-[8px] font-black uppercase text-gray-400 mt-0.5 tracking-widest">
+                        <p style={{ color: 'var(--color-text-secondary)' }} className="text-[8px] font-black uppercase mt-0.5 tracking-widest">
                           {tire.position} • {tire.model}
                         </p>
                       </div>
@@ -228,7 +229,7 @@ export const TiresTab: React.FC<TiresTabProps> = ({
                     
                     <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
                       <div className="text-right">
-                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Vida Útil</p>
+                        <p style={{ color: 'var(--color-text-secondary)' }} className="text-[8px] font-black uppercase tracking-widest">Vida Útil</p>
                         <p className={cn("text-xl font-black font-mono leading-none", statusColor)}>{usage.toFixed(0)}%</p>
                       </div>
                       <div className="flex gap-1.5">
@@ -253,36 +254,36 @@ export const TiresTab: React.FC<TiresTabProps> = ({
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <div className="bg-gray-50/50 p-2.5 rounded-lg border border-gray-100">
-                      <p className="text-[7px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Troca</p>
-                      <p className="text-[10px] font-black text-gray-700">{new Date(tire.installationDate).toLocaleDateString('pt-BR')}</p>
+                    <div style={{ backgroundColor: 'var(--color-sub-card-bg)', borderColor: 'rgba(128,128,128,0.1)' }} className="p-2.5 rounded-lg border text-left">
+                      <p style={{ color: 'var(--color-text-secondary)' }} className="text-[7px] font-black uppercase tracking-widest mb-0.5">Troca</p>
+                      <p style={{ color: 'var(--color-text-primary)' }} className="text-[10px] font-black">{new Date(tire.installationDate).toLocaleDateString('pt-BR')}</p>
                     </div>
-                    <div className="bg-gray-50/50 p-2.5 rounded-lg border border-gray-100">
-                      <p className="text-[7px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Inicial</p>
-                      <p className="text-[10px] font-black font-mono text-gray-700">{tire.installationMileage.toLocaleString()} km</p>
+                    <div style={{ backgroundColor: 'var(--color-sub-card-bg)', borderColor: 'rgba(128,128,128,0.1)' }} className="p-2.5 rounded-lg border text-left">
+                      <p style={{ color: 'var(--color-text-secondary)' }} className="text-[7px] font-black uppercase tracking-widest mb-0.5">Inicial</p>
+                      <p style={{ color: 'var(--color-text-primary)' }} className="text-[10px] font-black font-mono">{tire.installationMileage.toLocaleString()} km</p>
                     </div>
-                    <div className="bg-gray-50/50 p-2.5 rounded-lg border border-gray-100">
-                      <p className="text-[7px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Rodados</p>
-                      <p className="text-[10px] font-black font-mono text-gray-700">
+                    <div style={{ backgroundColor: 'var(--color-sub-card-bg)', borderColor: 'rgba(128,128,128,0.1)' }} className="p-2.5 rounded-lg border text-left">
+                      <p style={{ color: 'var(--color-text-secondary)' }} className="text-[7px] font-black uppercase tracking-widest mb-0.5">Rodados</p>
+                      <p style={{ color: 'var(--color-text-primary)' }} className="text-[10px] font-black font-mono">
                         {(currentMileage - tire.installationMileage).toLocaleString()} km
                       </p>
                     </div>
-                    <div className="bg-gray-50/50 p-2.5 rounded-lg border border-gray-100">
-                      <p className="text-[7px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Meta</p>
-                      <p className="text-[10px] font-black font-mono text-gray-700">{tire.expectedLifeMileage.toLocaleString()} km</p>
+                    <div style={{ backgroundColor: 'var(--color-sub-card-bg)', borderColor: 'rgba(128,128,128,0.1)' }} className="p-2.5 rounded-lg border text-left">
+                      <p style={{ color: 'var(--color-text-secondary)' }} className="text-[7px] font-black uppercase tracking-widest mb-0.5">Meta</p>
+                      <p style={{ color: 'var(--color-text-primary)' }} className="text-[10px] font-black font-mono">{tire.expectedLifeMileage.toLocaleString()} km</p>
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                     <div className="h-2 w-full bg-gray-50 rounded-full overflow-hidden border border-gray-100">
+                     <div style={{ backgroundColor: 'var(--color-sub-card-bg)', borderColor: 'rgba(128,128,128,0.1)' }} className="h-2 w-full rounded-full overflow-hidden border">
                        <motion.div 
                          initial={{ width: 0 }}
                          animate={{ width: `${usage}%` }}
                          className={cn("h-full rounded-full transition-colors", bgStatusColor)}
                        />
                      </div>
-                     <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest text-gray-400 bg-gray-50 p-2 rounded-lg border border-gray-100 shadow-sm">
-                        <span>{remaining > 0 ? `+${remaining.toLocaleString()} km` : 'Substituir Agora'}</span>
+                     <div style={{ backgroundColor: 'var(--color-sub-card-bg)', borderColor: 'rgba(128,128,128,0.1)' }} className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest text-gray-400 p-2 rounded-lg border shadow-sm">
+                        <span style={{ color: 'var(--color-text-secondary)' }}>{remaining > 0 ? `+${remaining.toLocaleString()} km` : 'Substituir Agora'}</span>
                         <span className={statusColor}>Score: {(100 - usage).toFixed(0)}</span>
                      </div>
                   </div>
