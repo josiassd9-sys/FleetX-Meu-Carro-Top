@@ -157,4 +157,35 @@ Instalar o APK final é fantástico, mas se você quiser alterar o código no VS
 
 ---
 
+## 🎨 Passo 8: Personalizando o Ícone do Aplicativo (Ícone do Banner)
+
+Para que o seu aplicativo tenha uma aparência profissional, vamos configurar a imagem do logotipo que você vê no banner do topo como o ícone oficial que aparece na tela inicial do celular.
+
+### 1. Localize a Imagem no seu Projeto
+A imagem que você deseja usar está localizada na seguinte pasta dentro do seu VS Code:
+`src/assets/images/fleetx_logo_strada.png`
+
+*(Dica: Se você alterou o logotipo, use o arquivo que você colocou nesta pasta ou no diretório `public/`).*
+
+### 2. No Android Studio
+Com o projeto aberto no Android Studio (Passo 5):
+
+1.  No painel esquerdo (**Project**), clique com o botão direito na pasta `app`.
+2.  Vá em **New > Image Asset**.
+3.  Uma janela chamada **Configure Image Asset** será aberta:
+    *   **Icon Type**: Mantenha `Launcher Icons (Adaptive and Legacy)`.
+    *   **Name**: Mantenha `ic_launcher`.
+    *   **Tab "Foreground Layer"**:
+        *   Em **Path**, clique no ícone da pastinha e navegue até a pasta do seu projeto exportado. Selecione o arquivo `src/assets/images/fleetx_logo_strada.png`.
+        *   **Scaling**: Use o controle deslizante **Resize** para ajustar o tamanho do logotipo dentro do círculo de segurança (o logotipo não deve ultrapassar as bordas pretas).
+    *   **Tab "Background Layer"**:
+        *   **Asset Type**: Escolha `Color`.
+        *   **Color**: Escolha uma cor que combine (ex: `#141414` para preto ou `#FFFFFF` para branco).
+4.  Clique em **Next** e depois em **Finish**.
+
+### 3. Finalizando
+O Android Studio irá gerar automaticamente todos os tamanhos de ícones necessários para diferentes celulares. Agora, basta gerar o APK novamente (Passo 6) e o novo ícone aparecerá na instalação!
+
+---
+
 ### 🎉 Parabéns! Seu app está pronto para rodar em celulares em formato APK de altíssimo desempenho corporativo nativo!

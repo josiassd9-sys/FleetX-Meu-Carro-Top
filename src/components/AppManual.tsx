@@ -114,6 +114,7 @@ export const AppManual: React.FC = () => {
           <ul className="list-disc ml-6 space-y-2">
             <li><strong>Idiomas Suportados:</strong> O FleetX agora fala 9 idiomas: Português, Inglês, Espanhol, Francês, Italiano, Alemão, Russo, Chinês e Coreano.</li>
             <li><strong>Símbolo Monetário e Regional:</strong> Customize a moeda (R$, €, $, etc.), o nome da sua agência/empresa e até a Referência de Mercado (Ex: Tabela FIPE ou KBB).</li>
+            <li><strong>Subtítulo da Marca:</strong> Personalize o texto que aparece logo abaixo do logo principal. Por padrão é "Meu Carro Top", mas você pode mudar para algo que identifique melhor sua frota ou empresa.</li>
           </ul>
           
           <p className="text-[11px] italic font-bold text-gray-400">Essa flexibilidade permite que gestores de frota em qualquer continente utilizem o FleetX com a mesma precisão técnica e cultural.</p>
@@ -316,7 +317,8 @@ export const AppManual: React.FC = () => {
         <ul className="list-disc ml-6 space-y-2">
           <li><strong>Adicionar Links de Consulta:</strong> Insira URLs de portais de autopeças, sites de consulta de placas ou bancos de imagens.</li>
           <li><strong>Uso de Variáveis:</strong> Ao cadastrar um link, use a tag <code>{'{{VALOR}}'}</code>. O sistema substituirá automaticamente pela Placa/Matrícula do carro ao clicar no botão de busca.</li>
-          <li><strong>Cenário de Uso:</strong> Cadastre o link de um catálogo de peças. Ao clicar na "Lupa" no card do carro, o app abre o site já filtrado para o seu veículo específico, economizando tempo precioso.</li>
+          <li><strong>Exemplo Prático (Peças):</strong> Cadastre o link <code>https://www.mercadolivre.com.br/veiculo/peças/&#123;&#123;VALOR&#125;&#125;</code>. Ao clicar na lupa no carro de placa "ABC1234", o robô abrirá o Mercado Livre já buscando peças para esse veículo.</li>
+          <li><strong>Exemplo Prático (Imagens):</strong> Cadastre <code>https://www.google.com/search?q=&#123;&#123;VALOR&#125;&#125;+car+photos&tbm=isch</code> para encontrar fotos reais do modelo do seu carro instantaneamente.</li>
         </ul>
       </ManualItem>
 
@@ -333,7 +335,8 @@ export const AppManual: React.FC = () => {
           </div>
           <ul className="list-disc ml-6 space-y-2">
             <li><strong>Onde conseguir:</strong> Vá em Configurações &gt; Chave API e clique no link do Google AI Studio. É grátis para uso pessoal.</li>
-            <li><strong>Como instalar:</strong> Basta copiar a chave gerada lá e colá-la no campo "Chave API" dentro do app.</li>
+            <li><strong>Vantagem de ser PRO:</strong> Usuários com assinatura PRO podem usar sua própria chave, o que garante que o sistema nunca fique lento ou sem créditos para processamento de manuais.</li>
+            <li><strong>Como instalar:</strong> Basta copiar a chave gerada lá e colá-la no campo "Chave API" dentro do app. O sistema validará se a chave é funcional imediatamente.</li>
             <li><strong>Exemplo de uso:</strong> Após salvar a chave, anexe o PDF do manual do seu carro. No card do veículo, surgirá o botão "IA Manual". Ali você pode perguntar qualquer coisa técnica e o robô responderá com precisão cirúrgica.</li>
           </ul>
         </div>

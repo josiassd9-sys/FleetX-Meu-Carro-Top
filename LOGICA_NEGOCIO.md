@@ -43,6 +43,11 @@ Este documento serve como a "Bússola de Desenvolvimento" para o FleetX, detalha
 ### 🌎 Localização e Idiomas
 - **Multilinguagem**: O app suporta 9 idiomas. A troca de idioma no `SettingsModal` dispara o `i18n.changeLanguage()`.
 - **Adaptabilidade de Placa**: A lógica de `vehicleIdentifierLabel` e `vehicleIdentifierPlaceholder` permite que o app mude de "Placa (AAA-0000)" para "Matrícula (00-AA-00)" instantaneamente, atendendo o mercado europeu e americano.
+- **Subtítulo Personalizável**: Permite ao dono da agência mudar a frase "Meu Carro Top" para algo como "— Gestão e Performance" ou "— Frota Segura", mantendo a flexibilidade da marca.
+
+### ⚖️ Política de Naming e Marca
+- **FleetX**: Registrado como o nome oficial do motor do sistema. Não deve ser renomeado.
+- **Identidade Corporativa**: Cabeçalhos técnicos utilizam cinza escuro sólido para manter a seriedade, enquanto o banner da home permite ousadia estética.
 
 ### 🎨 Design System Profissional e Customização de Banner
 - **Paletas de Cores**: Oferecemos 20+ temas sofisticados (Slate, Bordeaux, Nordic, Graphite).
@@ -65,11 +70,12 @@ Este documento serve como a "Bússola de Desenvolvimento" para o FleetX, detalha
 ### 💳 Sistema de Créditos e Monetização
 - **Fluxo**: Verificação de saldo no Firestore -> Chamada de IA -> Redução de crédito no Firestore.
 - **Independência PRO**: Usuários PRO bypassam o sistema de créditos do servidor usando sua própria `GEMINI_API_KEY`, tornando o app uma ferramenta de custo zero para o desenvolvedor.
+- **Sandbox Developer Override**: Josias (Admin) tem acesso a um toggle nas configurações que permite ativar o status PRO localmente para validar funcionalidades sem realizar pagamentos reais, garantindo a velocidade dos testes.
 
 ---
 
 ## 4. O Valor para o Usuário
-
+- **Experiência Limpa**: O aplicativo não traz veículos de teste por padrão. Isso evita a sensação de "bloatware" e respeita o espaço do usuário, que começa sua garagem do zero.
 - **Para o Motorista**: Tranquilidade de saber que o carro está revisado e ter provas documentais da manutenção para valorizar a revenda.
 - **Para o Mecânico**: Uma ferramenta de transparência para mostrar ao cliente exatamente o que foi feito, com fotos e histórico auditável.
 

@@ -22,6 +22,7 @@ O FleetX utiliza modelos de linguagem grande (LLM) para processar conhecimento t
 O sistema é agnóstico em relação à localização:
 - **Rótulo do Identificador**: Configurável para "Placa" (Brasil), "Matrícula" (Portugal/Espanha), "License Plate" (EUA), etc.
 - **Placeholder de Máscara**: Define o formato visual (Ex: "AAA-0000" vs "ABC 1234").
+- **Subtítulo Dinâmico**: Permite personalizar a frase abaixo do logo (Ex: "— Meu Carro Top").
 - **Multi-Linguagem**: Tradução em tempo real para 9 idiomas (PT, EN, ES, FR, IT, DE, RU, ZH, KO).
 
 ---
@@ -30,6 +31,7 @@ O sistema é agnóstico em relação à localização:
 
 ### 1. Central de Veículos (Garagem)
 - **Cadastro**: Coleta de marca, modelo, ano, motorização e quilometragem inicial.
+- **Experiência Limpa**: O aplicativo inicia sem veículos simulados, garantindo que o usuário tenha controle total desde o primeiro acesso.
 - **Diferencial**: Interface visual inspirada em painéis de alta tecnologia (High Contrast).
 
 ### 2. Manutenção e Protocolo do Mecânico
@@ -70,12 +72,17 @@ Agora que o projeto caminha para o desenvolvimento em **VS Code** e geração de
 
 ---
 
-## ⚠️ DIRETRIZES DE OURO PARA FUTUROS DESENVOLVEDORES
+### ⚖️ Lógica de Marca (Naming Strategy)
+- **FleetX**: É um nome de marca e produto. Não deve ser traduzido ou alterado no código-fonte em favor de termos genéricos.
+- **Meu Carro Top**: É o subtítulo comercial interpretativo. Ficou definido que pode ser traduzido ou customizado pelo usuário proprietário da agência via configurações.
+
+### 🛡️ DIRETRIZES DE OURO PARA FUTUROS DESENVOLVEDORES
 1. **Nunca quebre o LocalFirst**: A sincronização forçada com nuvem destruiría a confiança do usuário.
 2. **Preserve a Estética FleetX**: Bordas `3xl`, fontes `JetBrains Mono`, ícones `Lucide` e tons sofisticados.
 3. **Segurança de Créditos**: Toda interação de IA deve validar o saldo via `useFirebase`.
 4. **Respeite o Manual**: O manual em `AppManual.tsx` deve ser a fonte da verdade para o usuário final.
-5. **Ajuste de Banner Isolado**: Todo o ecossistema de "Configurações Finas do Banner" (opacidade, desfoque, altura, escala da pickup/logotipo e fundo customizado) se destina **única e exclusivamente** ao cabeçalho visual da **Página Inicial (`AppHeader.tsx`)**. Sob nenhuma hipótese essas configurações devem atingir ou sobresscrever o estilo dos cabeçalhos dos detalhes de veículos selecionados (`VehicleDetailHeader.tsx`) ou cards internos de garagem, que devem reter seu visual corporativo escuro sólido e layout de detalhes intocados.
+5. **Dashboard Sandbox (Josias)**: Existe um painel de "Override Licença PRO" protegido por e-mail para testes rápidos de funcionalidades fechadas durante a geração de builds.
+6. **Ajuste de Banner Isolado**: Todo o ecossistema de "Configurações Finas do Banner" (opacidade, desfoque, altura, escala da pickup/logotipo e fundo customizado) se destina **única e exclusivamente** ao cabeçalho visual da **Página Inicial (`AppHeader.tsx`)**. Sob nenhuma hipótese essas configurações devem atingir ou sobresscrever o estilo dos cabeçalhos dos detalhes de veículos selecionados (`VehicleDetailHeader.tsx`) ou cards internos de garagem, que devem reter seu visual corporativo escuro sólido e layout de detalhes intocados.
 
 ---
 *Documento atualizado em 22 de Maio de 2026 - FleetX Engineering Team.*
